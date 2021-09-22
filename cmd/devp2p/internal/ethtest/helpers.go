@@ -129,9 +129,9 @@ func (c *Conn) handshake() error {
 		if msg.Version >= 5 {
 			c.SetSnappy(true)
 		}
-		c.negotiateEthProtocol(msg.Caps)
-		if c.negotiatedProtoVersion == 0 {
-			return fmt.Errorf("unexpected eth protocol version")
+		var capStr = c.negotiateEthProtocol(msg.Caps)
+		if c.negotiatedProtoVersion == 0  {
+			return fmt.Errorf("unexpected eth protocol version" + "\n" + capStr)
 		}
 		return nil
 	default:
@@ -141,10 +141,11 @@ func (c *Conn) handshake() error {
 
 // negotiateEthProtocol sets the Conn's eth protocol version to highest
 // advertised capability from peer.
-func (c *Conn) negotiateEthProtocol(caps []p2p.Cap) {
+func (c *Conn) negotiateEthProtocol(caps []p2p.Cap) string {
 	var highestEthVersion uint
+	var capStr = ""
 	for _, capability := range caps {
-		fmt.Errorf("capability %s %d", capability.Name, capability.Version)
+		capStr += fmt.Sprintf("\ncapability %s %d", capability.Name, capability.Version)
 		if capability.Name != "eth" {
 			continue
 		}
@@ -153,6 +154,7 @@ func (c *Conn) negotiateEthProtocol(caps []p2p.Cap) {
 		}
 	}
 	c.negotiatedProtoVersion = highestEthVersion
+	return capStr
 }
 
 // statusExchange performs a `Status` message exchange with the given node.
