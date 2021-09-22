@@ -58,6 +58,20 @@ func (s *Suite) Is_66(t *utesting.T) {
 	}
 }
 
+// Is_OBFT checks if the node supports the OBFT protocol version
+func (s *Suite) Is_OBFT(t *utesting.T) {
+	conn, err := s.dialOBFT()
+	if err != nil {
+		t.Fatalf("dial failed: %v", err)
+	}
+	if err := conn.handshake(); err != nil {
+		t.Fatalf("handshake failed: %v", err)
+	}
+	if conn.negotiatedProtoVersion != 100  {
+		t.Fail()
+	}
+}
+
 // dial attempts to dial the given node and perform a handshake,
 // returning the created Conn if successful.
 func (s *Suite) dial() (*Conn, error) {
@@ -80,6 +94,30 @@ func (s *Suite) dial() (*Conn, error) {
 		{Name: "eth", Version: 65},
 	}
 	conn.ourHighestProtoVersion = 65
+	return &conn, nil
+}
+
+// dial attempts to dial the given node and perform a handshake,
+// returning the created Conn if successful.
+func (s *Suite) dialOBFT() (*Conn, error) {
+	// dial
+	fd, err := net.Dial("tcp", fmt.Sprintf("%v:%d", s.Dest.IP(), s.Dest.TCP()))
+	if err != nil {
+		return nil, err
+	}
+	conn := Conn{Conn: rlpx.NewConn(fd, s.Dest.Pubkey())}
+	// do encHandshake
+	conn.ourKey, _ = crypto.GenerateKey()
+	_, err = conn.Handshake(conn.ourKey)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+	// set default p2p capabilities
+	conn.caps = []p2p.Cap{
+		{Name: "obft", Version: 100},
+	}
+	conn.ourHighestProtoVersion = 100
 	return &conn, nil
 }
 
