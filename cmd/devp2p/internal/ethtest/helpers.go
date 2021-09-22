@@ -144,9 +144,7 @@ func (c *Conn) handshake() error {
 func (c *Conn) negotiateEthProtocol(caps []p2p.Cap) {
 	var highestEthVersion uint
 	for _, capability := range caps {
-		fmt.Sprint("capability: " + capability.Name)
-		fmt.Sprint("version: ")
-		fmt.Sprint(capability.Version)
+		fmt.Errorf("capability %s %d", capability.Name, capability.Version)
 		if capability.Name != "eth" {
 			continue
 		}
