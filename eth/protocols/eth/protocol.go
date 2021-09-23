@@ -64,7 +64,7 @@ const (
 	NewPooledTransactionHashesMsg = 0x08
 	GetPooledTransactionsMsg      = 0x09
 	PooledTransactionsMsg         = 0x0a
-	StatusMsgObft				  = 0x0b
+	StatusMsgObft				  = 0x00
 )
 
 var (
