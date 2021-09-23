@@ -49,7 +49,7 @@ var protocolLengths = map[uint]uint64{ETH66: 17}
 const maxMessageSize = 10 * 1024 * 1024
 
 const (
-	StatusMsg                     = 0x00
+	StatusObft                    = 0x00
 	StatusMsgDeprecated           = 0xff
 	NewBlockHashesMsg             = 0x01
 	TransactionsMsg               = 0x02
@@ -330,7 +330,7 @@ func (*StatusPacket) Name() string { return "Status" }
 func (*StatusPacket) Kind() byte   { return StatusMsgDeprecated }
 
 func (*StatusObftPacket) Name() string { return "StatusObft" }
-func (*StatusObftPacket) Kind() byte   { return StatusMsg }
+func (*StatusObftPacket) Kind() byte   { return StatusObft }
 
 func (*NewBlockHashesPacket) Name() string { return "NewBlockHashes" }
 func (*NewBlockHashesPacket) Kind() byte   { return NewBlockHashesMsg }
