@@ -123,6 +123,10 @@ type PooledTransactions eth.PooledTransactionsPacket
 
 func (pt PooledTransactions) Code() int { return 26 }
 
+type StatusObft eth.StatusPacketObft
+
+func (s StatusObft) Code() int { return 27 }
+
 // Conn represents an individual connection with a peer
 type Conn struct {
 	*rlpx.Conn

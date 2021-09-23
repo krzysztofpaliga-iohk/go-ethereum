@@ -184,7 +184,7 @@ func (s *Suite) TestStatusObft(t *utesting.T) {
 		t.Fatalf("dial failed: %v", err)
 	}
 	defer conn.Close()
-	if err := conn.peer(s.chain, nil); err != nil {
+	if err := conn.peerObft(s.chain, nil); err != nil {
 		t.Fatalf("peering failed: %v", err)
 	}
 }

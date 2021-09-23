@@ -146,6 +146,17 @@ func (c *Conn) peer(chain *Chain, status *Status) error {
 	return nil
 }
 
+// peer performs both the protocol handshake and the status message
+// exchange with the node in order to peer with it.
+func (c *Conn) peerObft(chain *Chain, statusObft *StatusObft) error {
+	if err := c.handshakeObft(); err != nil {
+		return fmt.Errorf("handshake failed: %v", err)
+	}
+	if _, err := c.statusObftExchange(chain, statusObft); err != nil {
+		return fmt.Errorf("status exchange failed: %v", err)
+	}
+	return nil
+}
 // handshake performs a protocol handshake with the node.
 func (c *Conn) handshake() error {
 	defer c.SetDeadline(time.Time{})
@@ -177,6 +188,37 @@ func (c *Conn) handshake() error {
 	}
 }
 
+// handshakeObft performs a protocol handshake with the node.
+func (c *Conn) handshakeObft() error {
+	defer c.SetDeadline(time.Time{})
+	c.SetDeadline(time.Now().Add(10 * time.Second))
+	// write hello to client
+	pub0 := crypto.FromECDSAPub(&c.ourKey.PublicKey)[1:]
+	ourHandshake := &Hello{
+		Version: 5,
+		Caps:    c.caps,
+		ID:      pub0,
+	}
+	if err := c.Write(ourHandshake); err != nil {
+		return fmt.Errorf("write to connection failed: %v", err)
+	}
+	// read hello from client
+	switch msg := c.Read().(type) {
+	case *Hello:
+		// set snappy if version is at least 5
+		if msg.Version >= 5 {
+			c.SetSnappy(true)
+		}
+		var capStr = c.negotiateObftProtocol(msg.Caps)
+		if c.negotiatedProtoVersion == 0  {
+			return fmt.Errorf("unexpected obft protocol version" + "\n" + capStr)
+		}
+		return nil
+	default:
+		return fmt.Errorf("bad handshake: %#v", msg)
+	}
+}
+
 // negotiateEthProtocol sets the Conn's eth protocol version to highest
 // advertised capability from peer.
 func (c *Conn) negotiateEthProtocol(caps []p2p.Cap) string {
@@ -185,6 +227,24 @@ func (c *Conn) negotiateEthProtocol(caps []p2p.Cap) string {
 	for _, capability := range caps {
 		capStr += fmt.Sprintf("\ncapability %s %d", capability.Name, capability.Version)
 		if capability.Name != "eth" {
+			continue
+		}
+		if capability.Version > highestEthVersion && capability.Version <= c.ourHighestProtoVersion {
+			highestEthVersion = capability.Version
+		}
+	}
+	c.negotiatedProtoVersion = highestEthVersion
+	return capStr
+}
+
+// negotiateObftProtocol sets the Conn's obft protocol version to highest
+// advertised capability from peer.
+func (c *Conn) negotiateObftProtocol(caps []p2p.Cap) string {
+	var highestEthVersion uint
+	var capStr = ""
+	for _, capability := range caps {
+		capStr += fmt.Sprintf("\ncapability %s %d", capability.Name, capability.Version)
+		if capability.Name != "obft" {
 			continue
 		}
 		if capability.Version > highestEthVersion && capability.Version <= c.ourHighestProtoVersion {
@@ -243,6 +303,54 @@ loop:
 			Head:            chain.blocks[chain.Len()-1].Hash(),
 			Genesis:         chain.blocks[0].Hash(),
 			ForkID:          chain.ForkID(),
+		}
+	}
+	if err := c.Write(status); err != nil {
+		return nil, fmt.Errorf("write to connection failed: %v", err)
+	}
+	return message, nil
+}
+
+// statusExchangeObft performs a `StatusObft` message exchange with the given node.
+func (c *Conn) statusObftExchange(chain *Chain, status *StatusObft) (Message, error) {
+	defer c.SetDeadline(time.Time{})
+	c.SetDeadline(time.Now().Add(20 * time.Second))
+
+	// read status message from client
+	var message Message
+loop:
+	for {
+		switch msg := c.Read().(type) {
+		case *StatusObft:
+			if have, want := msg.BestHash, chain.blocks[chain.Len()-1].Hash(); have != want {
+				return nil, fmt.Errorf("wrong head block in status, want:  %#x (block %d) have %#x",
+					want, chain.blocks[chain.Len()-1].NumberU64(), have)
+			}
+			if have, want := msg.ProtocolVersion, c.ourHighestProtoVersion; have != uint32(want) {
+				return nil, fmt.Errorf("wrong protocol version: have %v, want %v", have, want)
+			}
+			message = msg
+			break loop
+		case *Disconnect:
+			return nil, fmt.Errorf("disconnect received: %v", msg.Reason)
+		case *Ping:
+			c.Write(&Pong{}) // TODO (renaynay): in the future, this should be an error
+			// (PINGs should not be a response upon fresh connection)
+		default:
+			return nil, fmt.Errorf("bad status message: %s", pretty.Sdump(msg))
+		}
+	}
+	// make sure eth protocol version is set for negotiation
+	if c.negotiatedProtoVersion == 0 {
+		return nil, fmt.Errorf("eth protocol version must be set in Conn")
+	}
+	if status == nil {
+		// default status message
+		status = &StatusObft{
+			ProtocolVersion: uint32(c.negotiatedProtoVersion),
+			NetworkID:       chain.chainConfig.ChainID.Uint64(),
+			BestHash:            chain.blocks[chain.Len()-1].Hash(),
+			GenesisHash:         chain.blocks[0].Hash(),
 		}
 	}
 	if err := c.Write(status); err != nil {
