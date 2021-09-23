@@ -64,7 +64,7 @@ func (s *Suite) Is_OBFT(t *utesting.T) {
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
-	if err := conn.handshake(); err != nil {
+	if err := conn.handshakeObft(); err != nil {
 		t.Fatalf("handshake failed: %v", err)
 	}
 	if conn.negotiatedProtoVersion != 100  {
