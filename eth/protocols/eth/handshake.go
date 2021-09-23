@@ -41,7 +41,7 @@ func (p *Peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis 
 	var status StatusPacket // safe to read after two values have been received from errc
 
 	go func() {
-		errc <- p2p.Send(p.rw, StatusMsg, &StatusPacket{
+		errc <- p2p.Send(p.rw, StatusObft, &StatusPacket{
 			ProtocolVersion: uint32(p.version),
 			NetworkID:       network,
 			TD:              td,
@@ -81,8 +81,8 @@ func (p *Peer) readStatus(network uint64, status *StatusPacket, genesis common.H
 	if err != nil {
 		return err
 	}
-	if msg.Code != StatusMsg {
-		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusMsg)
+	if msg.Code != StatusObft {
+		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusObft)
 	}
 	if msg.Size > maxMessageSize {
 		return fmt.Errorf("%w: %v > %v", errMsgTooLarge, msg.Size, maxMessageSize)
