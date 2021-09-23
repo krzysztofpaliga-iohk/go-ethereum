@@ -50,6 +50,7 @@ const maxMessageSize = 10 * 1024 * 1024
 
 const (
 	StatusMsg                     = 0x00
+	StatusMsgDeprecated           = 0xff
 	NewBlockHashesMsg             = 0x01
 	TransactionsMsg               = 0x02
 	GetBlockHeadersMsg            = 0x03
@@ -326,7 +327,7 @@ type PooledTransactionsRLPPacket66 struct {
 }
 
 func (*StatusPacket) Name() string { return "Status" }
-func (*StatusPacket) Kind() byte   { return StatusMsg }
+func (*StatusPacket) Kind() byte   { return StatusMsgDeprecated }
 
 func (*StatusObftPacket) Name() string { return "StatusObft" }
 func (*StatusObftPacket) Kind() byte   { return StatusMsg }
