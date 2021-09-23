@@ -123,9 +123,9 @@ type PooledTransactions eth.PooledTransactionsPacket
 
 func (pt PooledTransactions) Code() int { return 26 }
 
-type StatusObft eth.StatusPacketObft
+type StatusObft eth.StatusObftPacket
 
-func (s StatusObft) Code() int { return 0x40 }
+func (s StatusObft) Code() int { return 27 }
 
 // Conn represents an individual connection with a peer
 type Conn struct {

@@ -93,8 +93,8 @@ type StatusPacket struct {
 	ForkID          forkid.ID
 }
 
-// StatusPacketObft is the network packet for the status message for obft and later.
-type StatusPacketObft struct {
+// StatusObftPacket is the network packet for the status message for obft and later.
+type StatusObftPacket struct {
 	ProtocolVersion uint32
 	NetworkID       uint64
 	BestHash    common.Hash
@@ -327,6 +327,9 @@ type PooledTransactionsRLPPacket66 struct {
 
 func (*StatusPacket) Name() string { return "Status" }
 func (*StatusPacket) Kind() byte   { return StatusMsg }
+
+func (*StatusObftPacket) Name() string { return "StatusObft" }
+func (*StatusObftPacket) Kind() byte   { return StatusMsg }
 
 func (*NewBlockHashesPacket) Name() string { return "NewBlockHashes" }
 func (*NewBlockHashesPacket) Kind() byte   { return NewBlockHashesMsg }
