@@ -128,6 +128,7 @@ func (s *Suite) Eth66Tests() []utesting.Test {
 func (s *Suite) ObftTests() []utesting.Test {
 	return []utesting.Test{
 		// only proceed with Obft test suite if node supports Obft protocol
+		{Name: "TestStatusObft", Fn: s.Is_OBFT},
 		{Name: "TestStatusObft", Fn: s.TestStatusObft},
 		//{Name: "TestGetBlockHeadersObft", Fn: s.TestGetBlockHeadersObft},
 		//{Name: "TestSimultaneousRequestsObft", Fn: s.TestSimultaneousRequestsObft},
