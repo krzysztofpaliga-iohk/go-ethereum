@@ -64,7 +64,6 @@ const (
 	NewPooledTransactionHashesMsg = 0x08
 	GetPooledTransactionsMsg      = 0x09
 	PooledTransactionsMsg         = 0x0a
-	StatusMsgObft				  = 0x00
 )
 
 var (
@@ -370,6 +369,3 @@ func (*GetPooledTransactionsPacket) Kind() byte   { return GetPooledTransactions
 
 func (*PooledTransactionsPacket) Name() string { return "PooledTransactions" }
 func (*PooledTransactionsPacket) Kind() byte   { return PooledTransactionsMsg }
-
-func (*StatusPacketObft) Name() string { return "StatusObft" }
-func (*StatusPacketObft) Kind() byte   { return StatusMsgObft }

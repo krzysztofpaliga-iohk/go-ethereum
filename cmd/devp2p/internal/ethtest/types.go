@@ -125,7 +125,7 @@ func (pt PooledTransactions) Code() int { return 26 }
 
 type StatusObft eth.StatusPacketObft
 
-func (s StatusObft) Code() int { return 0x40 }
+func (s StatusObft) Code() int { return 0x00 }
 
 // Conn represents an individual connection with a peer
 type Conn struct {
@@ -175,8 +175,6 @@ func (c *Conn) Read() Message {
 		msg = new(GetPooledTransactions)
 	case (PooledTransactions{}.Code()):
 		msg = new(PooledTransactions)
-	case (StatusObft{}.Code()):
-		msg = new(StatusObft)
 	default:
 		return errorf("invalid message code: %d", code)
 	}
@@ -263,6 +261,55 @@ func (c *Conn) Read66() (uint64, Message) {
 	return 0, errorf("invalid message: %s", string(rawData))
 }
 
+// Read reads an eth packet from the connection.
+func (c *Conn) ReadObft() Message {
+	code, rawData, _, err := c.Conn.Read()
+	if err != nil {
+		return errorf("could not read from connection: %v", err)
+	}
+
+	var msg Message
+	switch int(code) {
+	case (Hello{}).Code():
+		msg = new(Hello)
+	case (Ping{}).Code():
+		msg = new(Ping)
+	case (Pong{}).Code():
+		msg = new(Pong)
+	case (Disconnect{}).Code():
+		msg = new(Disconnect)
+	case (Status{}).Code():
+		msg = new(StatusObft)
+	case (GetBlockHeaders{}).Code():
+		msg = new(GetBlockHeaders)
+	case (BlockHeaders{}).Code():
+		msg = new(BlockHeaders)
+	case (GetBlockBodies{}).Code():
+		msg = new(GetBlockBodies)
+	case (BlockBodies{}).Code():
+		msg = new(BlockBodies)
+	case (NewBlock{}).Code():
+		msg = new(NewBlock)
+	case (NewBlockHashes{}).Code():
+		msg = new(NewBlockHashes)
+	case (Transactions{}).Code():
+		msg = new(Transactions)
+	case (NewPooledTransactionHashes{}).Code():
+		msg = new(NewPooledTransactionHashes)
+	case (GetPooledTransactions{}.Code()):
+		msg = new(GetPooledTransactions)
+	case (PooledTransactions{}.Code()):
+		msg = new(PooledTransactions)
+	default:
+		return errorf("invalid message code: %d", code)
+	}
+	// if message is devp2p, decode here
+	if err := rlp.DecodeBytes(rawData, msg); err != nil {
+		return errorf("could not rlp decode message: %v", err)
+	}
+	return msg
+}
+
 // Write writes a eth packet to the connection.
 func (c *Conn) Write(msg Message) error {
 	// check if message is eth protocol message
@@ -285,5 +332,20 @@ func (c *Conn) Write66(req eth.Packet, code int) error {
 		return err
 	}
 	_, err = c.Conn.Write(uint64(code), payload)
+	return err
+}
+
+// Write writes a eth packet to the connection.
+func (c *Conn) WriteOBFT(msg Message) error {
+	// check if message is eth protocol message
+	var (
+		payload []byte
+		err     error
+	)
+	payload, err = rlp.EncodeToBytes(msg)
+	if err != nil {
+		return err
+	}
+	_, err = c.Conn.Write(uint64(msg.Code()), payload)
 	return err
 }
