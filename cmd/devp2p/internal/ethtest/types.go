@@ -175,6 +175,8 @@ func (c *Conn) Read() Message {
 		msg = new(GetPooledTransactions)
 	case (PooledTransactions{}.Code()):
 		msg = new(PooledTransactions)
+	case (StatusObft{}.Code()):
+		msg = new(StatusObft)
 	default:
 		return errorf("invalid message code: %d", code)
 	}
