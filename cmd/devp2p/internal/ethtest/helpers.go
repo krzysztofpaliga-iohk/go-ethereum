@@ -60,7 +60,7 @@ func (s *Suite) Is_66(t *utesting.T) {
 
 // Is_OBFT checks if the node supports the OBFT protocol version
 func (s *Suite) Is_OBFT(t *utesting.T) {
-	conn, err := s.dialOBFT()
+	conn, err := s.dialObft()
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
@@ -99,7 +99,7 @@ func (s *Suite) dial() (*Conn, error) {
 
 // dial attempts to dial the given node and perform a handshake,
 // returning the created Conn if successful.
-func (s *Suite) dialOBFT() (*Conn, error) {
+func (s *Suite) dialObft() (*Conn, error) {
 	// dial
 	fd, err := net.Dial("tcp", fmt.Sprintf("%v:%d", s.Dest.IP(), s.Dest.TCP()))
 	if err != nil {
@@ -253,13 +253,23 @@ loop:
 
 // createSendAndRecvConns creates two connections, one for sending messages to the
 // node, and one for receiving messages from the node.
-func (s *Suite) createSendAndRecvConns(isEth66 bool) (*Conn, *Conn, error) {
+func (s *Suite) createSendAndRecvConns(isEth66 bool, isObft bool) (*Conn, *Conn, error) {
 	var (
 		sendConn *Conn
 		recvConn *Conn
 		err      error
 	)
-	if isEth66 {
+	if isObft {
+		sendConn, err = s.dialObft()
+		if err != nil {
+			return nil, nil, fmt.Errorf("dial failed: %v", err)
+		}
+		recvConn, err = s.dialObft()
+		if err != nil {
+			sendConn.Close()
+			return nil, nil, fmt.Errorf("dial failed: %v", err)
+		}
+	} else if isEth66 {
 		sendConn, err = s.dial66()
 		if err != nil {
 			return nil, nil, fmt.Errorf("dial failed: %v", err)
@@ -404,9 +414,9 @@ func (c *Conn) waitForResponse(chain *Chain, timeout time.Duration, requestID ui
 
 // sendNextBlock broadcasts the next block in the chain and waits
 // for the node to propagate the block and import it into its chain.
-func (s *Suite) sendNextBlock(isEth66 bool) error {
+func (s *Suite) sendNextBlock(isEth66 bool, isObft bool) error {
 	// set up sending and receiving connections
-	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66)
+	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
 	if err != nil {
 		return err
 	}
@@ -512,8 +522,8 @@ func (s *Suite) waitForBlockImport(conn *Conn, block *types.Block, isEth66 bool)
 	}
 }
 
-func (s *Suite) oldAnnounce(isEth66 bool) error {
-	sendConn, receiveConn, err := s.createSendAndRecvConns(isEth66)
+func (s *Suite) oldAnnounce(isEth66 bool, isObft bool) error {
+	sendConn, receiveConn, err := s.createSendAndRecvConns(isEth66, isObft)
 	if err != nil {
 		return err
 	}
@@ -559,12 +569,17 @@ func (s *Suite) oldAnnounce(isEth66 bool) error {
 	return nil
 }
 
-func (s *Suite) maliciousHandshakes(t *utesting.T, isEth66 bool) error {
+func (s *Suite) maliciousHandshakes(t *utesting.T, isEth66 bool, isObft bool) error {
 	var (
 		conn *Conn
 		err  error
 	)
-	if isEth66 {
+	if isObft {
+		conn, err = s.dialObft()
+		if err != nil {
+			return fmt.Errorf("dial failed: %v", err)
+		}
+	} else if isEth66 {
 		conn, err = s.dial66()
 		if err != nil {
 			return fmt.Errorf("dial failed: %v", err)
@@ -684,9 +699,9 @@ func (s *Suite) maliciousStatus(conn *Conn) error {
 	}
 }
 
-func (s *Suite) hashAnnounce(isEth66 bool) error {
+func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
 	// create connections
-	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66)
+	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
 	if err != nil {
 		return fmt.Errorf("failed to create connections: %v", err)
 	}

@@ -106,8 +106,8 @@ func rlpxEthTest(ctx *cli.Context) error {
 		if isOBFTFailed {
 			return runTests(ctx, suite.EthTests())
 		} else {
-			return runTests(ctx, suite.EthTests())
+			return runTests(ctx, suite.ObftTests())
 		}
 	}
-	return runTests(ctx, suite.AllEthTests())
+	return runTests(ctx, suite. AllEthTests())
 }

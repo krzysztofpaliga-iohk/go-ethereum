@@ -56,7 +56,7 @@ func (s *Suite) sendSuccessfulTxs(t *utesting.T, isEth66 bool) error {
 }
 
 func sendSuccessfulTx(s *Suite, tx *types.Transaction, prevTx *types.Transaction, isEth66 bool) error {
-	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66)
+	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, false)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func sendSuccessfulTx(s *Suite, tx *types.Transaction, prevTx *types.Transaction
 	}
 }
 
-func (s *Suite) sendMaliciousTxs(t *utesting.T, isEth66 bool) error {
+func (s *Suite) sendMaliciousTxs(t *utesting.T, isEth66 bool, isObft bool) error {
 	badTxs := []*types.Transaction{
 		getOldTxFromChain(s),
 		invalidNonceTx(s),
@@ -127,7 +127,9 @@ func (s *Suite) sendMaliciousTxs(t *utesting.T, isEth66 bool) error {
 		recvConn *Conn
 		err      error
 	)
-	if isEth66 {
+	if isObft {
+		recvConn, err = s.dialObft()
+	} else if isEth66 {
 		recvConn, err = s.dial66()
 	} else {
 		recvConn, err = s.dial()
@@ -141,7 +143,7 @@ func (s *Suite) sendMaliciousTxs(t *utesting.T, isEth66 bool) error {
 	}
 	for i, tx := range badTxs {
 		t.Logf("Testing malicious tx propagation: %v\n", i)
-		if err = sendMaliciousTx(s, tx, isEth66); err != nil {
+		if err = sendMaliciousTx(s, tx, isEth66, false); err != nil {
 			return fmt.Errorf("malicious tx test failed:\ntx: %v\nerror: %v", tx, err)
 		}
 	}
@@ -149,13 +151,15 @@ func (s *Suite) sendMaliciousTxs(t *utesting.T, isEth66 bool) error {
 	return checkMaliciousTxPropagation(s, badTxs, recvConn)
 }
 
-func sendMaliciousTx(s *Suite, tx *types.Transaction, isEth66 bool) error {
+func sendMaliciousTx(s *Suite, tx *types.Transaction, isEth66 bool, isObft bool) error {
 	// setup connection
 	var (
 		conn *Conn
 		err  error
 	)
-	if isEth66 {
+	if isObft {
+		conn, err = s.dialObft()
+	} else if isEth66 {
 		conn, err = s.dial66()
 	} else {
 		conn, err = s.dial()
@@ -182,7 +186,7 @@ func sendMultipleSuccessfulTxs(t *utesting.T, s *Suite, txs []*types.Transaction
 	txMsg := Transactions(txs)
 	t.Logf("sending %d txs\n", len(txs))
 
-	sendConn, recvConn, err := s.createSendAndRecvConns(true)
+	sendConn, recvConn, err := s.createSendAndRecvConns(true, false)
 	if err != nil {
 		return err
 	}
