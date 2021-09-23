@@ -270,6 +270,8 @@ func (c *Conn) ReadObft() Message {
 
 	var msg Message
 	switch int(code) {
+	case (StatusObft{}).Code():
+		msg = new(StatusObft)
 	case (Hello{}).Code():
 		msg = new(Hello)
 	case (Ping{}).Code():
@@ -278,8 +280,6 @@ func (c *Conn) ReadObft() Message {
 		msg = new(Pong)
 	case (Disconnect{}).Code():
 		msg = new(Disconnect)
-	case (StatusObft{}).Code():
-		msg = new(StatusObft)
 	case (Status{}).Code():
 		msg = new(Status)
 	case (GetBlockHeaders{}).Code():
