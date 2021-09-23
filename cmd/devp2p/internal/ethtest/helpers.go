@@ -320,7 +320,7 @@ func (c *Conn) statusObftExchange(chain *Chain, status *StatusObft) (Message, er
 	var message Message
 loop:
 	for {
-		switch msg := c.Read().(type) {
+		switch msg := c.ReadObft().(type) {
 		case *StatusObft:
 			if have, want := msg.BestHash, chain.blocks[chain.Len()-1].Hash(); have != want {
 				return nil, fmt.Errorf("wrong head block in status, want:  %#x (block %d) have %#x",
