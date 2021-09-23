@@ -278,8 +278,10 @@ func (c *Conn) ReadObft() Message {
 		msg = new(Pong)
 	case (Disconnect{}).Code():
 		msg = new(Disconnect)
-	case (Status{}).Code():
+	case (StatusObft{}).Code():
 		msg = new(StatusObft)
+	case (Status{}).Code():
+		msg = new(Status)
 	case (GetBlockHeaders{}).Code():
 		msg = new(GetBlockHeaders)
 	case (BlockHeaders{}).Code():
