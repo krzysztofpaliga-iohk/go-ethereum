@@ -127,7 +127,7 @@ func (s *Suite) ObftTests() []utesting.Test {
 		// only proceed with Obft test suite if node supports Obft protocol
 		{Name: "Is_OBFT", Fn: s.Is_OBFT},
 		{Name: "TestStatusObft", Fn: s.TestStatusObft},
-		//{Name: "TestGetBlockHeadersObft", Fn: s.TestGetBlockHeadersObft},
+		{Name: "TestGetBlockHeadersObft", Fn: s.TestGetBlockHeadersObft},
 		//{Name: "TestSimultaneousRequestsObft", Fn: s.TestSimultaneousRequestsObft},
 		//{Name: "TestSameRequestIDObft", Fn: s.TestSameRequestIDObft},
 		//{Name: "TestZeroRequestIDObft", Fn: s.TestZeroRequestIDObft},
