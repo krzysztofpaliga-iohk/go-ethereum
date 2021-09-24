@@ -128,20 +128,15 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "Is_OBFT", Fn: s.Is_OBFT},
 		{Name: "TestStatusObft", Fn: s.TestStatusObft},
 		{Name: "TestGetBlockHeadersObft", Fn: s.TestGetBlockHeadersObft},
-		//{Name: "TestSimultaneousRequestsObft", Fn: s.TestSimultaneousRequestsObft},
-		//{Name: "TestSameRequestIDObft", Fn: s.TestSameRequestIDObft},
-		//{Name: "TestZeroRequestIDObft", Fn: s.TestZeroRequestIDObft},
-		//{Name: "TestGetBlockBodiesObft", Fn: s.TestGetBlockBodiesObft},
-		//{Name: "TestBroadcastObft", Fn: s.TestBroadcastObft},
-		//{Name: "TestLargeAnnounceObft", Fn: s.TestLargeAnnounceObft},
-		//{Name: "TestOldAnnounceObft", Fn: s.TestOldAnnounceObft},
-		//{Name: "TestBlockHashAnnounceObft", Fn: s.TestBlockHashAnnounceObft},
-		//{Name: "TestMaliciousHandshakeObft", Fn: s.TestMaliciousHandshakeObft},
-		//{Name: "TestMaliciousStatusObft", Fn: s.TestMaliciousStatusObft},
-		//{Name: "TestTransactionObft", Fn: s.TestTransactionObft},
-		//{Name: "TestMaliciousTxObft", Fn: s.TestMaliciousTxObft},
-		//{Name: "TestLargeTxRequestObft", Fn: s.TestLargeTxRequestObft},
-		//{Name: "TestNewPooledTxsObft", Fn: s.TestNewPooledTxsObft},
+		{Name: "TestGetBlockBodiesObft", Fn: s.TestGetBlockBodiesObft},
+		//{Name: "TestBroadcast", Fn: s.TestBroadcast},
+		//{Name: "TestLargeAnnounce", Fn: s.TestLargeAnnounce},
+		//{Name: "TestOldAnnounce", Fn: s.TestOldAnnounce},
+		//{Name: "TestBlockHashAnnounce", Fn: s.TestBlockHashAnnounce},
+		//{Name: "TestMaliciousHandshake", Fn: s.TestMaliciousHandshake},
+		//{Name: "TestMaliciousStatus", Fn: s.TestMaliciousStatus},
+		//{Name: "TestTransaction", Fn: s.TestTransaction},
+		//{Name: "TestMaliciousTx", Fn: s.TestMaliciousTx},
 	}
 }
 
@@ -487,6 +482,38 @@ func (s *Suite) TestGetBlockHeadersObft(t *utesting.T) {
 //		t.Fatalf("unexpected: %s", pretty.Sdump(msg))
 //	}
 //}
+
+//TestGetBlockBodies tests whether the given node can respond to
+//a `GetBlockBodiesObft` request and that the response is accurate.
+func (s *Suite) TestGetBlockBodiesObft(t *utesting.T) {
+	conn, err := s.dial()
+	if err != nil {
+		t.Fatalf("dial failed: %v", err)
+	}
+	defer conn.Close()
+	if err := conn.peerObft(s.chain, nil); err != nil {
+		t.Fatalf("peering failed: %v", err)
+	}
+	// create block bodies request
+	req := &GetBlockBodies{
+		s.chain.blocks[54].Hash(),
+		s.chain.blocks[75].Hash(),
+	}
+	if err := conn.Write(req); err != nil {
+		t.Fatalf("could not write to connection: %v", err)
+	}
+	// wait for response
+	switch msg := conn.readAndServeObft(s.chain, timeout).(type) {
+	case *BlockBodies:
+		t.Logf("received %d block bodies", len(*msg))
+		if len(*msg) != len(*req) {
+			t.Fatalf("wrong bodies in response: expected %d bodies, "+
+				"got %d", len(*req), len(*msg))
+		}
+	default:
+		t.Fatalf("unexpected: %s", pretty.Sdump(msg))
+	}
+}
 
 // TestGetBlockBodies66 tests whether the given node can respond to
 // a `GetBlockBodies` request and that the response is accurate over
