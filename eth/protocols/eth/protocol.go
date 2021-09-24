@@ -23,7 +23,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/forkid"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 )
@@ -49,8 +48,8 @@ var protocolLengths = map[uint]uint64{ETH66: 17}
 const maxMessageSize = 10 * 1024 * 1024
 
 const (
-	StatusObft                    = 0x00
-	StatusMsgDeprecated           = 0xff
+	StatusMsg           = 0x00
+	StatusMsgDeprecated = 0xff
 	NewBlockHashesMsg             = 0x01
 	TransactionsMsg               = 0x02
 	GetBlockHeadersMsg            = 0x03
@@ -85,14 +84,14 @@ type Packet interface {
 }
 
 // StatusPacket is the network packet for the status message for eth/64 and later.
-type StatusPacket struct {
-	ProtocolVersion uint32
-	NetworkID       uint64
-	TD              *big.Int
-	Head            common.Hash
-	Genesis         common.Hash
-	ForkID          forkid.ID
-}
+//type StatusPacket struct {
+//	ProtocolVersion uint32
+//	NetworkID       uint64
+//	TD              *big.Int
+//	Head            common.Hash
+//	Genesis         common.Hash
+//	ForkID          forkid.ID
+//}
 
 // StatusObftPacket is the network packet for the status message for obft and later.
 type StatusObftPacket struct {
@@ -326,11 +325,11 @@ type PooledTransactionsRLPPacket66 struct {
 	PooledTransactionsRLPPacket
 }
 
-func (*StatusPacket) Name() string { return "Status" }
-func (*StatusPacket) Kind() byte   { return StatusMsgDeprecated }
+//func (*StatusPacket) Name() string { return "Status" }
+//func (*StatusPacket) Kind() byte   { return StatusMsgDeprecated }
 
-func (*StatusObftPacket) Name() string { return "StatusObft" }
-func (*StatusObftPacket) Kind() byte   { return StatusObft }
+func (*StatusObftPacket) Name() string { return "StatusMsg" }
+func (*StatusObftPacket) Kind() byte   { return StatusMsg }
 
 func (*NewBlockHashesPacket) Name() string { return "NewBlockHashes" }
 func (*NewBlockHashesPacket) Kind() byte   { return NewBlockHashesMsg }

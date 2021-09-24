@@ -41,7 +41,7 @@ func (p *Peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis 
 	var status StatusObftPacket // safe to read after two values have been received from errc
 
 	go func() {
-		errc <- p2p.Send(p.rw, StatusObft, &StatusObftPacket{
+		errc <- p2p.Send(p.rw, StatusMsg, &StatusObftPacket{
 			ProtocolVersion: uint32(p.version),
 			NetworkID:       network,
 			BestHash:            head,
@@ -60,7 +60,7 @@ func (p *Peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis 
 				return err
 			}
 		case <-timeout.C:
-			return p2p.DiscReadTimeout
+			return p2p.DiscReadTimeout 
 		}
 	}
 
@@ -78,8 +78,8 @@ func (p *Peer) readStatus(network uint64, status *StatusPacket, genesis common.H
 	if err != nil {
 		return err
 	}
-	if msg.Code != StatusObft {
-		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusObft)
+	if msg.Code != StatusMsg {
+		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusMsg)
 	}
 	if msg.Size > maxMessageSize {
 		return fmt.Errorf("%w: %v > %v", errMsgTooLarge, msg.Size, maxMessageSize)
@@ -108,8 +108,8 @@ func (p *Peer) readStatusObft(network uint64, status *StatusObftPacket, genesis 
 	if err != nil {
 		return err
 	}
-	if msg.Code != StatusObft {
-		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusObft)
+	if msg.Code != StatusMsg {
+		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusMsg)
 	}
 	if msg.Size > maxMessageSize {
 		return fmt.Errorf("%w: %v > %v", errMsgTooLarge, msg.Size, maxMessageSize)

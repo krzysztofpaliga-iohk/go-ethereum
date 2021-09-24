@@ -73,9 +73,9 @@ type Pong struct{}
 func (p Pong) Code() int { return 0x03 }
 
 // Status is the network packet for the status message for eth/64 and later.
-type Status eth.StatusPacket
-
-func (s Status) Code() int { return 16 }
+//type Status eth.StatusPacket
+//
+//func (s Status) Code() int { return 16 }
 
 // NewBlockHashes is the network packet for the block announcements.
 type NewBlockHashes eth.NewBlockHashesPacket
@@ -153,8 +153,8 @@ func (c *Conn) Read() Message {
 		msg = new(Pong)
 	case (Disconnect{}).Code():
 		msg = new(Disconnect)
-	case (Status{}).Code():
-		msg = new(Status)
+	//case (Status{}).Code():
+	//	msg = new(Status)
 	case (GetBlockHeaders{}).Code():
 		msg = new(GetBlockHeaders)
 	case (BlockHeaders{}).Code():
@@ -202,8 +202,8 @@ func (c *Conn) Read66() (uint64, Message) {
 		msg = new(Pong)
 	case (Disconnect{}).Code():
 		msg = new(Disconnect)
-	case (Status{}).Code():
-		msg = new(Status)
+	//case (Status{}).Code():
+	//	msg = new(Status)
 	case (GetBlockHeaders{}).Code():
 		ethMsg := new(eth.GetBlockHeadersPacket66)
 		if err := rlp.DecodeBytes(rawData, ethMsg); err != nil {
@@ -280,8 +280,8 @@ func (c *Conn) ReadObft() Message {
 		msg = new(Pong)
 	case (Disconnect{}).Code():
 		msg = new(Disconnect)
-	case (Status{}).Code():
-		msg = new(Status)
+	//case (Status{}).Code():
+	//	msg = new(Status)
 	case (GetBlockHeaders{}).Code():
 		msg = new(GetBlockHeaders)
 	case (BlockHeaders{}).Code():

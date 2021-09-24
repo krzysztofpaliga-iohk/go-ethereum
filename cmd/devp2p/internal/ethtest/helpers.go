@@ -311,7 +311,7 @@ loop:
 	return message, nil
 }
 
-// statusExchangeObft performs a `StatusObft` message exchange with the given node.
+// statusExchangeObft performs a `StatusMsg` message exchange with the given node.
 func (c *Conn) statusObftExchange(chain *Chain, status *StatusObft) (Message, error) {
 	defer c.SetDeadline(time.Time{})
 	c.SetDeadline(time.Now().Add(20 * time.Second))
