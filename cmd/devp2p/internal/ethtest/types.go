@@ -313,7 +313,7 @@ func (c *Conn) ReadObft() Message {
 }
 
 // Read66 reads an eth66 packet from the connection.
-func (c *Conn) Read66Obft() (uint64, Message) {
+func (c *Conn) ReadObftWithId() (uint64, Message) {
 	code, rawData, _, err := c.Conn.Read()
 	if err != nil {
 		return 0, errorf("could not read from connection: %v", err)
@@ -416,7 +416,7 @@ func (c *Conn) Write(msg Message) error {
 //}
 
 // Write66 writes an eth66 packet to the connection.
-func (c *Conn) Write66Obft(req eth.Packet, code int) error {
+func (c *Conn) WriteObft(req eth.Packet, code int) error {
 	payload, err := rlp.EncodeToBytes(req)
 	if err != nil {
 		return err

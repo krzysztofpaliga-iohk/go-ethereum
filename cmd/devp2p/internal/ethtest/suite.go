@@ -129,7 +129,7 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "TestStatusObft", Fn: s.TestStatusObft},
 		{Name: "TestGetBlockHeadersObft", Fn: s.TestGetBlockHeadersObft},
 		{Name: "TestGetBlockBodiesObft", Fn: s.TestGetBlockBodiesObft},
-		//{Name: "TestBroadcast", Fn: s.TestBroadcast},
+		{Name: "TestBroadcastObft", Fn: s.TestBroadcastObft},
 		//{Name: "TestLargeAnnounce", Fn: s.TestLargeAnnounce},
 		//{Name: "TestOldAnnounce", Fn: s.TestOldAnnounce},
 		//{Name: "TestBlockHashAnnounce", Fn: s.TestBlockHashAnnounce},
@@ -270,7 +270,7 @@ func (s *Suite) TestGetBlockHeadersObft(t *utesting.T) {
 		Skip:    1,
 		Reverse: false,
 	}
-	headers, err := conn.headersRequestObft(req, s.chain, eth66, 33)
+	headers, err := conn.headersRequestObft(req, s.chain)
 	if err != nil {
 		t.Fatalf("could not get block headers: %v", err)
 	}
@@ -558,6 +558,14 @@ func (s *Suite) TestGetBlockBodiesObft(t *utesting.T) {
 //		t.Fatalf("block broadcast failed: %v", err)
 //	}
 //}
+
+//TestBroadcast tests whether a block announcement is correctly
+//propagated to the given node's peer(s).
+func (s *Suite) TestBroadcastObft(t *utesting.T) {
+	if err := s.sendNextBlockObft(eth65, false); err != nil {
+		t.Fatalf("block broadcast failed: %v", err)
+	}
+}
 
 // TestBroadcast66 tests whether a block announcement is correctly
 // propagated to the given node's peer(s) on the eth66 protocol.

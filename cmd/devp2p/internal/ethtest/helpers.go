@@ -67,7 +67,7 @@ func (s *Suite) Is_OBFT(t *utesting.T) {
 	if err := conn.handshakeObft(); err != nil {
 		t.Fatalf("handshake failed: %v", err)
 	}
-	if conn.negotiatedProtoVersion != 100  {
+	if conn.negotiatedProtoVersion != 100 {
 		t.Fail()
 	}
 }
@@ -157,6 +157,7 @@ func (c *Conn) peerObft(chain *Chain, statusObft *StatusObft) error {
 	}
 	return nil
 }
+
 // handshake performs a protocol handshake with the node.
 func (c *Conn) handshake() error {
 	defer c.SetDeadline(time.Time{})
@@ -179,7 +180,7 @@ func (c *Conn) handshake() error {
 			c.SetSnappy(true)
 		}
 		var capStr = c.negotiateEthProtocol(msg.Caps)
-		if c.negotiatedProtoVersion == 0  {
+		if c.negotiatedProtoVersion == 0 {
 			return fmt.Errorf("unexpected eth protocol version" + "\n" + capStr)
 		}
 		return nil
@@ -210,7 +211,7 @@ func (c *Conn) handshakeObft() error {
 			c.SetSnappy(true)
 		}
 		var capStr = c.negotiateObftProtocol(msg.Caps)
-		if c.negotiatedProtoVersion == 0  {
+		if c.negotiatedProtoVersion == 0 {
 			return fmt.Errorf("unexpected obft protocol version" + "\n" + capStr)
 		}
 		return nil
@@ -349,8 +350,8 @@ loop:
 		status = &StatusObft{
 			ProtocolVersion: uint32(c.negotiatedProtoVersion),
 			NetworkID:       chain.chainConfig.ChainID.Uint64(),
-			BestHash:            chain.blocks[chain.Len()-1].Hash(),
-			GenesisHash:         chain.blocks[0].Hash(),
+			BestHash:        chain.blocks[chain.Len()-1].Hash(),
+			GenesisHash:     chain.blocks[0].Hash(),
 		}
 	}
 	if err := c.Write(status); err != nil {
@@ -361,43 +362,22 @@ loop:
 
 // createSendAndRecvConns creates two connections, one for sending messages to the
 // node, and one for receiving messages from the node.
-func (s *Suite) createSendAndRecvConns(isEth66 bool, isObft bool) (*Conn, *Conn, error) {
+func (s *Suite) createSendAndRecvConnsObft() (*Conn, *Conn, error) {
 	var (
 		sendConn *Conn
 		recvConn *Conn
 		err      error
 	)
-	if isObft {
-		sendConn, err = s.dialObft()
-		if err != nil {
-			return nil, nil, fmt.Errorf("dial failed: %v", err)
-		}
-		recvConn, err = s.dialObft()
-		if err != nil {
-			sendConn.Close()
-			return nil, nil, fmt.Errorf("dial failed: %v", err)
-		}
-	} else if isEth66 {
-		sendConn, err = s.dial66()
-		if err != nil {
-			return nil, nil, fmt.Errorf("dial failed: %v", err)
-		}
-		recvConn, err = s.dial66()
-		if err != nil {
-			sendConn.Close()
-			return nil, nil, fmt.Errorf("dial failed: %v", err)
-		}
-	} else {
-		sendConn, err = s.dial()
-		if err != nil {
-			return nil, nil, fmt.Errorf("dial failed: %v", err)
-		}
-		recvConn, err = s.dial()
-		if err != nil {
-			sendConn.Close()
-			return nil, nil, fmt.Errorf("dial failed: %v", err)
-		}
+	sendConn, err = s.dialObft()
+	if err != nil {
+		return nil, nil, fmt.Errorf("dial failed: %v", err)
 	}
+	recvConn, err = s.dialObft()
+	if err != nil {
+		sendConn.Close()
+		return nil, nil, fmt.Errorf("dial failed: %v", err)
+	}
+
 	return sendConn, recvConn, nil
 }
 
@@ -490,12 +470,12 @@ func (c *Conn) readAndServeObft(chain *Chain, timeout time.Duration) Message {
 //	return 0, errorf("no message received within %v", timeout)
 //}
 
-func (c *Conn) readAndServe66Obft(chain *Chain, timeout time.Duration) (uint64, Message) {
+func (c *Conn) readAndServeObftWithId(chain *Chain, timeout time.Duration) (uint64, Message) {
 	start := time.Now()
 	for time.Since(start) < timeout {
 		c.SetReadDeadline(time.Now().Add(10 * time.Second))
 
-		reqID, msg := c.Read66Obft()
+		reqID, msg := c.ReadObftWithId()
 
 		switch msg := msg.(type) {
 		case *Ping:
@@ -509,7 +489,7 @@ func (c *Conn) readAndServe66Obft(chain *Chain, timeout time.Duration) (uint64, 
 				RequestId:          reqID,
 				BlockHeadersPacket: eth.BlockHeadersPacket(headers),
 			}
-			if err := c.Write66Obft(resp, BlockHeaders{}.Code()); err != nil {
+			if err := c.WriteObft(resp, BlockHeaders{}.Code()); err != nil {
 				return 0, errorf("could not write to connection: %v", err)
 			}
 		default:
@@ -539,13 +519,11 @@ func (c *Conn) readAndServe66Obft(chain *Chain, timeout time.Duration) (uint64, 
 //}
 
 // headersRequest executes the given `GetBlockHeaders` request.
-func (c *Conn) headersRequestObft(request *GetBlockHeaders, chain *Chain, isEth66 bool, reqID uint64) (BlockHeaders, error) {
+func (c *Conn) headersRequestObft(request *GetBlockHeaders, chain *Chain) (BlockHeaders, error) {
 	defer c.SetReadDeadline(time.Time{})
 	c.SetReadDeadline(time.Now().Add(20 * time.Second))
 	// if on eth66 connection, perform eth66 GetBlockHeaders request
-	if isEth66 {
-		return getBlockHeaders66Obft(chain, c, request, reqID)
-	}
+
 	if err := c.Write(request); err != nil {
 		return nil, err
 	}
@@ -577,14 +555,14 @@ func (c *Conn) headersRequestObft(request *GetBlockHeaders, chain *Chain, isEth6
 //	return headers, nil
 //}
 //etBlockHeaders66 executes the given `GetBlockHeaders` request over the eth66 protocol.
-func getBlockHeaders66Obft(chain *Chain, conn *Conn, request *GetBlockHeaders, id uint64) (BlockHeaders, error) {
+func getBlockHeadersObft(chain *Chain, conn *Conn, request *GetBlockHeaders, id uint64) (BlockHeaders, error) {
 	// write request
 	packet := eth.GetBlockHeadersPacket(*request)
 	req := &eth.GetBlockHeadersPacket66{
 		RequestId:             id,
 		GetBlockHeadersPacket: &packet,
 	}
-	if err := conn.Write66Obft(req, GetBlockHeaders{}.Code()); err != nil {
+	if err := conn.WriteObft(req, GetBlockHeaders{}.Code()); err != nil {
 		return nil, fmt.Errorf("could not write to connection: %v", err)
 	}
 	// wait for response
@@ -616,12 +594,13 @@ func headersMatch(expected BlockHeaders, headers BlockHeaders) bool {
 // request ID is received.
 func (c *Conn) waitForResponseObft(chain *Chain, timeout time.Duration, requestID uint64) Message {
 	for {
-		id, msg := c.readAndServe66Obft(chain, timeout)
+		id, msg := c.readAndServeObftWithId(chain, timeout)
 		if id == requestID {
 			return msg
 		}
 	}
 }
+
 //// sendNextBlock broadcasts the next block in the chain and waits
 //// for the node to propagate the block and import it into its chain.
 //func (s *Suite) sendNextBlock(isEth66 bool, isObft bool) error {
@@ -661,7 +640,7 @@ func (c *Conn) waitForResponseObft(chain *Chain, timeout time.Duration, requestI
 // for the node to propagate the block and import it into its chain.
 func (s *Suite) sendNextBlockObft(isEth66 bool, isObft bool) error {
 	// set up sending and receiving connections
-	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
+	sendConn, recvConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
 		return err
 	}
@@ -707,6 +686,7 @@ func (s *Suite) testAnnounceObft(sendConn, receiveConn *Conn, blockAnnouncement 
 	}
 	return s.waitAnnounceObft(receiveConn, blockAnnouncement)
 }
+
 // waitAnnounce waits for a NewBlock or NewBlockHashes announcement from the node.
 //func (s *Suite) waitAnnounce(conn *Conn, blockAnnouncement *NewBlock) error {
 //	for {
@@ -800,7 +780,6 @@ func (s *Suite) waitAnnounceObft(conn *Conn, blockAnnouncement *NewBlock) error 
 //	}
 //}
 
-
 func (s *Suite) waitForBlockImportObft(conn *Conn, block *types.Block, isEth66 bool) error {
 	defer conn.SetReadDeadline(time.Time{})
 	conn.SetReadDeadline(time.Now().Add(20 * time.Second))
@@ -818,12 +797,9 @@ func (s *Suite) waitForBlockImportObft(conn *Conn, block *types.Block, isEth66 b
 			headers BlockHeaders
 			err     error
 		)
-		if isEth66 {
-			requestID := uint64(54)
-			headers, err = conn.headersRequestObft(req, s.chain, eth66, requestID)
-		} else {
-			headers, err = conn.headersRequestObft(req, s.chain, eth65, 0)
-		}
+
+		headers, err = conn.headersRequestObft(req, s.chain)
+
 		if err != nil {
 			return fmt.Errorf("GetBlockHeader request failed: %v", err)
 		}
@@ -887,7 +863,7 @@ func (s *Suite) waitForBlockImportObft(conn *Conn, block *types.Block, isEth66 b
 //}
 
 func (s *Suite) oldAnnounceObft(isEth66 bool, isObft bool) error {
-	sendConn, receiveConn, err := s.createSendAndRecvConns(isEth66, isObft)
+	sendConn, receiveConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
 		return err
 	}
@@ -1032,8 +1008,8 @@ func (s *Suite) maliciousHandshakesObft(t *utesting.T, isEth66 bool) error {
 	)
 	conn, err = s.dialObft()
 	if err != nil {
-			return fmt.Errorf("dial failed: %v", err)
-		}
+		return fmt.Errorf("dial failed: %v", err)
+	}
 
 	defer conn.Close()
 	// write hello to client
@@ -1151,8 +1127,8 @@ func (s *Suite) maliciousStatusObft(conn *Conn) error {
 	status := &StatusObft{
 		ProtocolVersion: uint32(conn.negotiatedProtoVersion),
 		NetworkID:       s.chain.chainConfig.ChainID.Uint64(),
-		BestHash:            s.chain.blocks[s.chain.Len()-1].Hash(),
-		GenesisHash:         s.chain.blocks[0].Hash(),
+		BestHash:        s.chain.blocks[s.chain.Len()-1].Hash(),
+		GenesisHash:     s.chain.blocks[0].Hash(),
 	}
 	// get status
 	msg, err := conn.statusObftExchange(s.chain, status)
@@ -1290,7 +1266,7 @@ func (s *Suite) maliciousStatusObft(conn *Conn) error {
 
 func (s *Suite) hashAnnounceObft(isEth66 bool, isObft bool) error {
 	// create connections
-	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
+	sendConn, recvConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
 		return fmt.Errorf("failed to create connections: %v", err)
 	}
@@ -1320,7 +1296,7 @@ func (s *Suite) hashAnnounceObft(isEth66 bool, isObft bool) error {
 		blockHeaderReq GetBlockHeaders
 	)
 	if isEth66 {
-		id, msg = sendConn.Read66Obft()
+		id, msg = sendConn.ReadObftWithId()
 		switch msg := msg.(type) {
 		case GetBlockHeaders:
 			blockHeaderReq = msg
@@ -1335,7 +1311,7 @@ func (s *Suite) hashAnnounceObft(isEth66 bool, isObft bool) error {
 				pretty.Sdump(announcement),
 				pretty.Sdump(blockHeaderReq))
 		}
-		if err := sendConn.Write66Obft(&eth.BlockHeadersPacket66{
+		if err := sendConn.WriteObft(&eth.BlockHeadersPacket66{
 			RequestId: id,
 			BlockHeadersPacket: eth.BlockHeadersPacket{
 				nextBlock.Header(),

@@ -196,7 +196,7 @@ func (s *Suite) sendSuccessfulTxsObft(t *utesting.T, isEth66 bool) error {
 	//}
 
 func sendSuccessfulTxObft(s *Suite, tx *types.Transaction, prevTx *types.Transaction, isEth66 bool) error {
-	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, false)
+	sendConn, recvConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
 		return err
 	}
@@ -418,7 +418,7 @@ func sendMultipleSuccessfulTxsObft(t *utesting.T, s *Suite, txs []*types.Transac
 	txMsg := Transactions(txs)
 	t.Logf("sending %d txs\n", len(txs))
 
-	sendConn, recvConn, err := s.createSendAndRecvConns(true, false)
+	sendConn, recvConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
 		return err
 	}
