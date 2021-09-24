@@ -73,35 +73,35 @@ func (p *Peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis 
 }
 
 // readStatus reads the remote handshake message.
-func (p *Peer) readStatus(network uint64, status *StatusPacket, genesis common.Hash, forkFilter forkid.Filter) error {
-	msg, err := p.rw.ReadMsg()
-	if err != nil {
-		return err
-	}
-	if msg.Code != StatusMsg {
-		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusMsg)
-	}
-	if msg.Size > maxMessageSize {
-		return fmt.Errorf("%w: %v > %v", errMsgTooLarge, msg.Size, maxMessageSize)
-	}
-	// Decode the handshake and make sure everything matches
-	if err := msg.Decode(&status); err != nil {
-		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
-	}
-	if status.NetworkID != network {
-		return fmt.Errorf("%w: %d (!= %d)", errNetworkIDMismatch, status.NetworkID, network)
-	}
-	if uint(status.ProtocolVersion) != p.version {
-		return fmt.Errorf("%w: %d (!= %d)", errProtocolVersionMismatch, status.ProtocolVersion, p.version)
-	}
-	if status.Genesis != genesis {
-		return fmt.Errorf("%w: %x (!= %x)", errGenesisMismatch, status.Genesis, genesis)
-	}
-	if err := forkFilter(status.ForkID); err != nil {
-		return fmt.Errorf("%w: %v", errForkIDRejected, err)
-	}
-	return nil
-}
+//func (p *Peer) readStatus(network uint64, status *StatusPacket, genesis common.Hash, forkFilter forkid.Filter) error {
+//	msg, err := p.rw.ReadMsg()
+//	if err != nil {
+//		return err
+//	}
+//	if msg.Code != StatusMsg {
+//		return fmt.Errorf("%w: first msg has code %x (!= %x)", errNoStatusMsg, msg.Code, StatusMsg)
+//	}
+//	if msg.Size > maxMessageSize {
+//		return fmt.Errorf("%w: %v > %v", errMsgTooLarge, msg.Size, maxMessageSize)
+//	}
+//	// Decode the handshake and make sure everything matches
+//	if err := msg.Decode(&status); err != nil {
+//		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
+//	}
+//	if status.NetworkID != network {
+//		return fmt.Errorf("%w: %d (!= %d)", errNetworkIDMismatch, status.NetworkID, network)
+//	}
+//	if uint(status.ProtocolVersion) != p.version {
+//		return fmt.Errorf("%w: %d (!= %d)", errProtocolVersionMismatch, status.ProtocolVersion, p.version)
+//	}
+//	if status.Genesis != genesis {
+//		return fmt.Errorf("%w: %x (!= %x)", errGenesisMismatch, status.Genesis, genesis)
+//	}
+//	if err := forkFilter(status.ForkID); err != nil {
+//		return fmt.Errorf("%w: %v", errForkIDRejected, err)
+//	}
+//	return nil
+//}
 
 func (p *Peer) readStatusObft(network uint64, status *StatusObftPacket, genesis common.Hash, forkFilter forkid.Filter) error {
 	msg, err := p.rw.ReadMsg()

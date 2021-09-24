@@ -185,8 +185,135 @@ func (c *Conn) Read() Message {
 	return msg
 }
 
+//// Read66 reads an eth66 packet from the connection.
+//func (c *Conn) Read66() (uint64, Message) {
+//	code, rawData, _, err := c.Conn.Read()
+//	if err != nil {
+//		return 0, errorf("could not read from connection: %v", err)
+//	}
+//
+//	var msg Message
+//	switch int(code) {
+//	case (Hello{}).Code():
+//		msg = new(Hello)
+//	case (Ping{}).Code():
+//		msg = new(Ping)
+//	case (Pong{}).Code():
+//		msg = new(Pong)
+//	case (Disconnect{}).Code():
+//		msg = new(Disconnect)
+//	//case (Status{}).Code():
+//	//	msg = new(Status)
+//	case (GetBlockHeaders{}).Code():
+//		ethMsg := new(eth.GetBlockHeadersPacket66)
+//		if err := rlp.DecodeBytes(rawData, ethMsg); err != nil {
+//			return 0, errorf("could not rlp decode message: %v", err)
+//		}
+//		return ethMsg.RequestId, GetBlockHeaders(*ethMsg.GetBlockHeadersPacket)
+//	case (BlockHeaders{}).Code():
+//		ethMsg := new(eth.BlockHeadersPacket66)
+//		if err := rlp.DecodeBytes(rawData, ethMsg); err != nil {
+//			return 0, errorf("could not rlp decode message: %v", err)
+//		}
+//		return ethMsg.RequestId, BlockHeaders(ethMsg.BlockHeadersPacket)
+//	case (GetBlockBodies{}).Code():
+//		ethMsg := new(eth.GetBlockBodiesPacket66)
+//		if err := rlp.DecodeBytes(rawData, ethMsg); err != nil {
+//			return 0, errorf("could not rlp decode message: %v", err)
+//		}
+//		return ethMsg.RequestId, GetBlockBodies(ethMsg.GetBlockBodiesPacket)
+//	case (BlockBodies{}).Code():
+//		ethMsg := new(eth.BlockBodiesPacket66)
+//		if err := rlp.DecodeBytes(rawData, ethMsg); err != nil {
+//			return 0, errorf("could not rlp decode message: %v", err)
+//		}
+//		return ethMsg.RequestId, BlockBodies(ethMsg.BlockBodiesPacket)
+//	case (NewBlock{}).Code():
+//		msg = new(NewBlock)
+//	case (NewBlockHashes{}).Code():
+//		msg = new(NewBlockHashes)
+//	case (Transactions{}).Code():
+//		msg = new(Transactions)
+//	case (NewPooledTransactionHashes{}).Code():
+//		msg = new(NewPooledTransactionHashes)
+//	case (GetPooledTransactions{}.Code()):
+//		ethMsg := new(eth.GetPooledTransactionsPacket66)
+//		if err := rlp.DecodeBytes(rawData, ethMsg); err != nil {
+//			return 0, errorf("could not rlp decode message: %v", err)
+//		}
+//		return ethMsg.RequestId, GetPooledTransactions(ethMsg.GetPooledTransactionsPacket)
+//	case (PooledTransactions{}.Code()):
+//		ethMsg := new(eth.PooledTransactionsPacket66)
+//		if err := rlp.DecodeBytes(rawData, ethMsg); err != nil {
+//			return 0, errorf("could not rlp decode message: %v", err)
+//		}
+//		return ethMsg.RequestId, PooledTransactions(ethMsg.PooledTransactionsPacket)
+//	default:
+//		msg = errorf("invalid message code: %d", code)
+//	}
+//
+//	if msg != nil {
+//		if err := rlp.DecodeBytes(rawData, msg); err != nil {
+//			return 0, errorf("could not rlp decode message: %v", err)
+//		}
+//		return 0, msg
+//	}
+//	return 0, errorf("invalid message: %s", string(rawData))
+//}
+
+// Read reads an eth packet from the connection.
+func (c *Conn) ReadObft() Message {
+	code, rawData, _, err := c.Conn.Read()
+	if err != nil {
+		return errorf("could not read from connection: %v", err)
+	}
+
+	var msg Message
+	switch int(code) {
+	case (StatusObft{}).Code():
+		msg = new(StatusObft)
+	case (Hello{}).Code():
+		msg = new(Hello)
+	case (Ping{}).Code():
+		msg = new(Ping)
+	case (Pong{}).Code():
+		msg = new(Pong)
+	case (Disconnect{}).Code():
+		msg = new(Disconnect)
+	//case (Status{}).Code():
+	//	msg = new(Status)
+	case (GetBlockHeaders{}).Code():
+		msg = new(GetBlockHeaders)
+	case (BlockHeaders{}).Code():
+		msg = new(BlockHeaders)
+	case (GetBlockBodies{}).Code():
+		msg = new(GetBlockBodies)
+	case (BlockBodies{}).Code():
+		msg = new(BlockBodies)
+	case (NewBlock{}).Code():
+		msg = new(NewBlock)
+	case (NewBlockHashes{}).Code():
+		msg = new(NewBlockHashes)
+	case (Transactions{}).Code():
+		msg = new(Transactions)
+	case (NewPooledTransactionHashes{}).Code():
+		msg = new(NewPooledTransactionHashes)
+	case (GetPooledTransactions{}.Code()):
+		msg = new(GetPooledTransactions)
+	case (PooledTransactions{}.Code()):
+		msg = new(PooledTransactions)
+	default:
+		return errorf("invalid message code: %d", code)
+	}
+	// if message is devp2p, decode here
+	if err := rlp.DecodeBytes(rawData, msg); err != nil {
+		return errorf("could not rlp decode message: %v", err)
+	}
+	return msg
+}
+
 // Read66 reads an eth66 packet from the connection.
-func (c *Conn) Read66() (uint64, Message) {
+func (c *Conn) Read66Obft() (uint64, Message) {
 	code, rawData, _, err := c.Conn.Read()
 	if err != nil {
 		return 0, errorf("could not read from connection: %v", err)
@@ -194,6 +321,8 @@ func (c *Conn) Read66() (uint64, Message) {
 
 	var msg Message
 	switch int(code) {
+	case (StatusObft{}).Code():
+		msg = new(StatusObft)
 	case (Hello{}).Code():
 		msg = new(Hello)
 	case (Ping{}).Code():
@@ -261,57 +390,6 @@ func (c *Conn) Read66() (uint64, Message) {
 	return 0, errorf("invalid message: %s", string(rawData))
 }
 
-// Read reads an eth packet from the connection.
-func (c *Conn) ReadObft() Message {
-	code, rawData, _, err := c.Conn.Read()
-	if err != nil {
-		return errorf("could not read from connection: %v", err)
-	}
-
-	var msg Message
-	switch int(code) {
-	case (StatusObft{}).Code():
-		msg = new(StatusObft)
-	case (Hello{}).Code():
-		msg = new(Hello)
-	case (Ping{}).Code():
-		msg = new(Ping)
-	case (Pong{}).Code():
-		msg = new(Pong)
-	case (Disconnect{}).Code():
-		msg = new(Disconnect)
-	//case (Status{}).Code():
-	//	msg = new(Status)
-	case (GetBlockHeaders{}).Code():
-		msg = new(GetBlockHeaders)
-	case (BlockHeaders{}).Code():
-		msg = new(BlockHeaders)
-	case (GetBlockBodies{}).Code():
-		msg = new(GetBlockBodies)
-	case (BlockBodies{}).Code():
-		msg = new(BlockBodies)
-	case (NewBlock{}).Code():
-		msg = new(NewBlock)
-	case (NewBlockHashes{}).Code():
-		msg = new(NewBlockHashes)
-	case (Transactions{}).Code():
-		msg = new(Transactions)
-	case (NewPooledTransactionHashes{}).Code():
-		msg = new(NewPooledTransactionHashes)
-	case (GetPooledTransactions{}.Code()):
-		msg = new(GetPooledTransactions)
-	case (PooledTransactions{}.Code()):
-		msg = new(PooledTransactions)
-	default:
-		return errorf("invalid message code: %d", code)
-	}
-	// if message is devp2p, decode here
-	if err := rlp.DecodeBytes(rawData, msg); err != nil {
-		return errorf("could not rlp decode message: %v", err)
-	}
-	return msg
-}
-
 // Write writes a eth packet to the connection.
 func (c *Conn) Write(msg Message) error {
 	// check if message is eth protocol message
@@ -328,7 +406,17 @@ func (c *Conn) Write(msg Message) error {
 }
 
 // Write66 writes an eth66 packet to the connection.
-func (c *Conn) Write66(req eth.Packet, code int) error {
+//func (c *Conn) Write66(req eth.Packet, code int) error {
+//	payload, err := rlp.EncodeToBytes(req)
+//	if err != nil {
+//		return err
+//	}
+//	_, err = c.Conn.Write(uint64(code), payload)
+//	return err
+//}
+
+// Write66 writes an eth66 packet to the connection.
+func (c *Conn) Write66Obft(req eth.Packet, code int) error {
 	payload, err := rlp.EncodeToBytes(req)
 	if err != nil {
 		return err
@@ -336,7 +424,6 @@ func (c *Conn) Write66(req eth.Packet, code int) error {
 	_, err = c.Conn.Write(uint64(code), payload)
 	return err
 }
-
 // Write writes a eth packet to the connection.
 func (c *Conn) WriteOBFT(msg Message) error {
 	// check if message is eth protocol message

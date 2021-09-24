@@ -32,7 +32,30 @@ import (
 //var faucetAddr = common.HexToAddress("0x71562b71999873DB5b286dF957af199Ec94617F7")
 var faucetKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 
-func (s *Suite) sendSuccessfulTxs(t *utesting.T, isEth66 bool) error {
+//func (s *Suite) sendSuccessfulTxs(t *utesting.T, isEth66 bool) error {
+//	tests := []*types.Transaction{
+//		getNextTxFromChain(s),
+//		unknownTx(s),
+//	}
+//	for i, tx := range tests {
+//		if tx == nil {
+//			return fmt.Errorf("could not find tx to send")
+//		}
+//		t.Logf("Testing tx propagation %d: sending tx %v %v %v\n", i, tx.Hash().String(), tx.GasPrice(), tx.Gas())
+//		// get previous tx if exists for reference in case of old tx propagation
+//		var prevTx *types.Transaction
+//		if i != 0 {
+//			prevTx = tests[i-1]
+//		}
+//		// write tx to connection
+//		if err := sendSuccessfulTx(s, tx, prevTx, isEth66); err != nil {
+//			return fmt.Errorf("send successful tx test failed: %v", err)
+//		}
+//	}
+//	return nil
+//}
+
+func (s *Suite) sendSuccessfulTxsObft(t *utesting.T, isEth66 bool) error {
 	tests := []*types.Transaction{
 		getNextTxFromChain(s),
 		unknownTx(s),
@@ -48,21 +71,138 @@ func (s *Suite) sendSuccessfulTxs(t *utesting.T, isEth66 bool) error {
 			prevTx = tests[i-1]
 		}
 		// write tx to connection
-		if err := sendSuccessfulTx(s, tx, prevTx, isEth66); err != nil {
+		if err := sendSuccessfulTxObft(s, tx, prevTx, isEth66); err != nil {
 			return fmt.Errorf("send successful tx test failed: %v", err)
 		}
 	}
 	return nil
 }
+//func sendSuccessfulTx(s *Suite, tx *types.Transaction, prevTx *types.Transaction, isEth66 bool) error {
+//	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, false)
+//	if err != nil {
+//		return err
+//	}
+//	defer sendConn.Close()
+//	defer recvConn.Close()
+//	if err = sendConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	// Send the transaction
+//	if err = sendConn.Write(&Transactions{tx}); err != nil {
+//		return fmt.Errorf("failed to write to connection: %v", err)
+//	}
+//	// peer receiving connection to node
+//	if err = recvConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	// update last nonce seen
+//	nonce = tx.Nonce()
+//	// Wait for the transaction announcement
+//	for {
+//		switch msg := recvConn.readAndServe(s.chain, timeout).(type) {
+//		case *Transactions:
+//			recTxs := *msg
+//			// if you receive an old tx propagation, read from connection again
+//			if len(recTxs) == 1 && prevTx != nil {
+//				if recTxs[0] == prevTx {
+//					continue
+//				}
+//			}
+//			for _, gotTx := range recTxs {
+//				if gotTx.Hash() == tx.Hash() {
+//					// Ok
+//					return nil
+//				}
+//			}
+//			return fmt.Errorf("missing transaction: got %v missing %v", recTxs, tx.Hash())
+//		case *NewPooledTransactionHashes:
+//			txHashes := *msg
+//			// if you receive an old tx propagation, read from connection again
+//			if len(txHashes) == 1 && prevTx != nil {
+//				if txHashes[0] == prevTx.Hash() {
+//					continue
+//				}
+//			}
+//			for _, gotHash := range txHashes {
+//				if gotHash == tx.Hash() {
+//					// Ok
+//					return nil
+//				}
+//			}
+//			return fmt.Errorf("missing transaction announcement: got %v missing %v", txHashes, tx.Hash())
+//		default:
+//			return fmt.Errorf("unexpected message in sendSuccessfulTx: %s", pretty.Sdump(msg))
+//		}
+//	}
+//}
 
-func sendSuccessfulTx(s *Suite, tx *types.Transaction, prevTx *types.Transaction, isEth66 bool) error {
+	//func sendSuccessfulTx(s *Suite, tx *types.Transaction, prevTx *types.Transaction, isEth66 bool) error {
+	//	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, false)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	defer sendConn.Close()
+	//	defer recvConn.Close()
+	//	if err = sendConn.peerObft(s.chain, nil); err != nil {
+	//		return fmt.Errorf("peering failed: %v", err)
+	//	}
+	//	// Send the transaction
+	//	if err = sendConn.Write(&Transactions{tx}); err != nil {
+	//		return fmt.Errorf("failed to write to connection: %v", err)
+	//	}
+	//	// peer receiving connection to node
+	//	if err = recvConn.peer(s.chain, nil); err != nil {
+	//		return fmt.Errorf("peering failed: %v", err)
+	//	}
+	//	// update last nonce seen
+	//	nonce = tx.Nonce()
+	//	// Wait for the transaction announcement
+	//	for {
+	//		switch msg := recvConn.readAndServe(s.chain, timeout).(type) {
+	//		case *Transactions:
+	//			recTxs := *msg
+	//			// if you receive an old tx propagation, read from connection again
+	//			if len(recTxs) == 1 && prevTx != nil {
+	//				if recTxs[0] == prevTx {
+	//					continue
+	//				}
+	//			}
+	//			for _, gotTx := range recTxs {
+	//				if gotTx.Hash() == tx.Hash() {
+	//					// Ok
+	//					return nil
+	//				}
+	//			}
+	//			return fmt.Errorf("missing transaction: got %v missing %v", recTxs, tx.Hash())
+	//		case *NewPooledTransactionHashes:
+	//			txHashes := *msg
+	//			// if you receive an old tx propagation, read from connection again
+	//			if len(txHashes) == 1 && prevTx != nil {
+	//				if txHashes[0] == prevTx.Hash() {
+	//					continue
+	//				}
+	//			}
+	//			for _, gotHash := range txHashes {
+	//				if gotHash == tx.Hash() {
+	//					// Ok
+	//					return nil
+	//				}
+	//			}
+	//			return fmt.Errorf("missing transaction announcement: got %v missing %v", txHashes, tx.Hash())
+	//		default:
+	//			return fmt.Errorf("unexpected message in sendSuccessfulTx: %s", pretty.Sdump(msg))
+	//		}
+	//	}
+	//}
+
+func sendSuccessfulTxObft(s *Suite, tx *types.Transaction, prevTx *types.Transaction, isEth66 bool) error {
 	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, false)
 	if err != nil {
 		return err
 	}
 	defer sendConn.Close()
 	defer recvConn.Close()
-	if err = sendConn.peer(s.chain, nil); err != nil {
+	if err = sendConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// Send the transaction
@@ -70,14 +210,14 @@ func sendSuccessfulTx(s *Suite, tx *types.Transaction, prevTx *types.Transaction
 		return fmt.Errorf("failed to write to connection: %v", err)
 	}
 	// peer receiving connection to node
-	if err = recvConn.peer(s.chain, nil); err != nil {
+	if err = recvConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// update last nonce seen
 	nonce = tx.Nonce()
 	// Wait for the transaction announcement
 	for {
-		switch msg := recvConn.readAndServe(s.chain, timeout).(type) {
+		switch msg := recvConn.readAndServeObft(s.chain, timeout).(type) {
 		case *Transactions:
 			recTxs := *msg
 			// if you receive an old tx propagation, read from connection again
@@ -114,7 +254,8 @@ func sendSuccessfulTx(s *Suite, tx *types.Transaction, prevTx *types.Transaction
 	}
 }
 
-func (s *Suite) sendMaliciousTxs(t *utesting.T, isEth66 bool, isObft bool) error {
+
+func (s *Suite) sendMaliciousTxsObft(t *utesting.T, isEth66 bool, isObft bool) error {
 	badTxs := []*types.Transaction{
 		getOldTxFromChain(s),
 		invalidNonceTx(s),
@@ -138,20 +279,47 @@ func (s *Suite) sendMaliciousTxs(t *utesting.T, isEth66 bool, isObft bool) error
 		return fmt.Errorf("dial failed: %v", err)
 	}
 	defer recvConn.Close()
-	if err = recvConn.peer(s.chain, nil); err != nil {
+	if err = recvConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	for i, tx := range badTxs {
 		t.Logf("Testing malicious tx propagation: %v\n", i)
-		if err = sendMaliciousTx(s, tx, isEth66, false); err != nil {
+		if err = sendMaliciousTxObft(s, tx, isEth66, false); err != nil {
 			return fmt.Errorf("malicious tx test failed:\ntx: %v\nerror: %v", tx, err)
 		}
 	}
 	// check to make sure bad txs aren't propagated
-	return checkMaliciousTxPropagation(s, badTxs, recvConn)
+	return checkMaliciousTxPropagationObft(s, badTxs, recvConn)
 }
 
-func sendMaliciousTx(s *Suite, tx *types.Transaction, isEth66 bool, isObft bool) error {
+//func sendMaliciousTx(s *Suite, tx *types.Transaction, isEth66 bool, isObft bool) error {
+//	// setup connection
+//	var (
+//		conn *Conn
+//		err  error
+//	)
+//	if isObft {
+//		conn, err = s.dialObft()
+//	} else if isEth66 {
+//		conn, err = s.dial66()
+//	} else {
+//		conn, err = s.dial()
+//	}
+//	if err != nil {
+//		return fmt.Errorf("dial failed: %v", err)
+//	}
+//	defer conn.Close()
+//	if err = conn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	// write malicious tx
+//	if err = conn.Write(&Transactions{tx}); err != nil {
+//		return fmt.Errorf("failed to write to connection: %v", err)
+//	}
+//	return nil
+//}
+
+func sendMaliciousTxObft(s *Suite, tx *types.Transaction, isEth66 bool, isObft bool) error {
 	// setup connection
 	var (
 		conn *Conn
@@ -168,7 +336,7 @@ func sendMaliciousTx(s *Suite, tx *types.Transaction, isEth66 bool, isObft bool)
 		return fmt.Errorf("dial failed: %v", err)
 	}
 	defer conn.Close()
-	if err = conn.peer(s.chain, nil); err != nil {
+	if err = conn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// write malicious tx
@@ -182,7 +350,71 @@ var nonce = uint64(99)
 
 // sendMultipleSuccessfulTxs sends the given transactions to the node and
 // expects the node to accept and propagate them.
-func sendMultipleSuccessfulTxs(t *utesting.T, s *Suite, txs []*types.Transaction) error {
+//func sendMultipleSuccessfulTxs(t *utesting.T, s *Suite, txs []*types.Transaction) error {
+//	txMsg := Transactions(txs)
+//	t.Logf("sending %d txs\n", len(txs))
+//
+//	sendConn, recvConn, err := s.createSendAndRecvConns(true, false)
+//	if err != nil {
+//		return err
+//	}
+//	defer sendConn.Close()
+//	defer recvConn.Close()
+//	if err = sendConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	if err = recvConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	// Send the transactions
+//	if err = sendConn.Write(&txMsg); err != nil {
+//		return fmt.Errorf("failed to write message to connection: %v", err)
+//	}
+//	// update nonce
+//	nonce = txs[len(txs)-1].Nonce()
+//	// Wait for the transaction announcement(s) and make sure all sent txs are being propagated
+//	recvHashes := make([]common.Hash, 0)
+//	// all txs should be announced within 3 announcements
+//	for i := 0; i < 3; i++ {
+//		switch msg := recvConn.readAndServe(s.chain, timeout).(type) {
+//		case *Transactions:
+//			for _, tx := range *msg {
+//				recvHashes = append(recvHashes, tx.Hash())
+//			}
+//		case *NewPooledTransactionHashes:
+//			recvHashes = append(recvHashes, *msg...)
+//		default:
+//			if !strings.Contains(pretty.Sdump(msg), "i/o timeout") {
+//				return fmt.Errorf("unexpected message while waiting to receive txs: %s", pretty.Sdump(msg))
+//			}
+//		}
+//		// break once all 2000 txs have been received
+//		if len(recvHashes) == 2000 {
+//			break
+//		}
+//		if len(recvHashes) > 0 {
+//			_, missingTxs := compareReceivedTxs(recvHashes, txs)
+//			if len(missingTxs) > 0 {
+//				continue
+//			} else {
+//				t.Logf("successfully received all %d txs", len(txs))
+//				return nil
+//			}
+//		}
+//	}
+//	_, missingTxs := compareReceivedTxs(recvHashes, txs)
+//	if len(missingTxs) > 0 {
+//		for _, missing := range missingTxs {
+//			t.Logf("missing tx: %v", missing.Hash())
+//		}
+//		return fmt.Errorf("missing %d txs", len(missingTxs))
+//	}
+//	return nil
+//}
+
+// sendMultipleSuccessfulTxs sends the given transactions to the node and
+// expects the node to accept and propagate them.
+func sendMultipleSuccessfulTxsObft(t *utesting.T, s *Suite, txs []*types.Transaction) error {
 	txMsg := Transactions(txs)
 	t.Logf("sending %d txs\n", len(txs))
 
@@ -192,10 +424,10 @@ func sendMultipleSuccessfulTxs(t *utesting.T, s *Suite, txs []*types.Transaction
 	}
 	defer sendConn.Close()
 	defer recvConn.Close()
-	if err = sendConn.peer(s.chain, nil); err != nil {
+	if err = sendConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
-	if err = recvConn.peer(s.chain, nil); err != nil {
+	if err = recvConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// Send the transactions
@@ -208,7 +440,7 @@ func sendMultipleSuccessfulTxs(t *utesting.T, s *Suite, txs []*types.Transaction
 	recvHashes := make([]common.Hash, 0)
 	// all txs should be announced within 3 announcements
 	for i := 0; i < 3; i++ {
-		switch msg := recvConn.readAndServe(s.chain, timeout).(type) {
+		switch msg := recvConn.readAndServeObft(s.chain, timeout).(type) {
 		case *Transactions:
 			for _, tx := range *msg {
 				recvHashes = append(recvHashes, tx.Hash())
@@ -243,11 +475,38 @@ func sendMultipleSuccessfulTxs(t *utesting.T, s *Suite, txs []*types.Transaction
 	}
 	return nil
 }
+// checkMaliciousTxPropagation checks whether the given malicious transactions were
+// propagated by the node.
+//func checkMaliciousTxPropagation(s *Suite, txs []*types.Transaction, conn *Conn) error {
+//	switch msg := conn.readAndServe(s.chain, time.Second*8).(type) {
+//	case *Transactions:
+//		// check to see if any of the failing txs were in the announcement
+//		recvTxs := make([]common.Hash, len(*msg))
+//		for i, recvTx := range *msg {
+//			recvTxs[i] = recvTx.Hash()
+//		}
+//		badTxs, _ := compareReceivedTxs(recvTxs, txs)
+//		if len(badTxs) > 0 {
+//			return fmt.Errorf("received %d bad txs: \n%v", len(badTxs), badTxs)
+//		}
+//	case *NewPooledTransactionHashes:
+//		badTxs, _ := compareReceivedTxs(*msg, txs)
+//		if len(badTxs) > 0 {
+//			return fmt.Errorf("received %d bad txs: \n%v", len(badTxs), badTxs)
+//		}
+//	case *Error:
+//		// Transaction should not be announced -> wait for timeout
+//		return nil
+//	default:
+//		return fmt.Errorf("unexpected message in sendFailingTx: %s", pretty.Sdump(msg))
+//	}
+//	return nil
+//}
 
 // checkMaliciousTxPropagation checks whether the given malicious transactions were
 // propagated by the node.
-func checkMaliciousTxPropagation(s *Suite, txs []*types.Transaction, conn *Conn) error {
-	switch msg := conn.readAndServe(s.chain, time.Second*8).(type) {
+func checkMaliciousTxPropagationObft(s *Suite, txs []*types.Transaction, conn *Conn) error {
+	switch msg := conn.readAndServeObft(s.chain, time.Second*8).(type) {
 	case *Transactions:
 		// check to see if any of the failing txs were in the announcement
 		recvTxs := make([]common.Hash, len(*msg))

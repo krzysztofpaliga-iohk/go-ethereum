@@ -136,15 +136,15 @@ func (s *Suite) dial66() (*Conn, error) {
 
 // peer performs both the protocol handshake and the status message
 // exchange with the node in order to peer with it.
-func (c *Conn) peer(chain *Chain, status *Status) error {
-	if err := c.handshake(); err != nil {
-		return fmt.Errorf("handshake failed: %v", err)
-	}
-	if _, err := c.statusExchange(chain, status); err != nil {
-		return fmt.Errorf("status exchange failed: %v", err)
-	}
-	return nil
-}
+//func (c *Conn) peer(chain *Chain, status *Status) error {
+//	if err := c.handshake(); err != nil {
+//		return fmt.Errorf("handshake failed: %v", err)
+//	}
+//	if _, err := c.statusExchange(chain, status); err != nil {
+//		return fmt.Errorf("status exchange failed: %v", err)
+//	}
+//	return nil
+//}
 
 // peer performs both the protocol handshake and the status message
 // exchange with the node in order to peer with it.
@@ -256,60 +256,60 @@ func (c *Conn) negotiateObftProtocol(caps []p2p.Cap) string {
 }
 
 // statusExchange performs a `Status` message exchange with the given node.
-func (c *Conn) statusExchange(chain *Chain, status *Status) (Message, error) {
-	defer c.SetDeadline(time.Time{})
-	c.SetDeadline(time.Now().Add(20 * time.Second))
-
-	// read status message from client
-	var message Message
-loop:
-	for {
-		switch msg := c.Read().(type) {
-		case *Status:
-			if have, want := msg.Head, chain.blocks[chain.Len()-1].Hash(); have != want {
-				return nil, fmt.Errorf("wrong head block in status, want:  %#x (block %d) have %#x",
-					want, chain.blocks[chain.Len()-1].NumberU64(), have)
-			}
-			if have, want := msg.TD.Cmp(chain.TD()), 0; have != want {
-				return nil, fmt.Errorf("wrong TD in status: have %v want %v", have, want)
-			}
-			if have, want := msg.ForkID, chain.ForkID(); !reflect.DeepEqual(have, want) {
-				return nil, fmt.Errorf("wrong fork ID in status: have %v, want %v", have, want)
-			}
-			if have, want := msg.ProtocolVersion, c.ourHighestProtoVersion; have != uint32(want) {
-				return nil, fmt.Errorf("wrong protocol version: have %v, want %v", have, want)
-			}
-			message = msg
-			break loop
-		case *Disconnect:
-			return nil, fmt.Errorf("disconnect received: %v", msg.Reason)
-		case *Ping:
-			c.Write(&Pong{}) // TODO (renaynay): in the future, this should be an error
-			// (PINGs should not be a response upon fresh connection)
-		default:
-			return nil, fmt.Errorf("bad status message: %s", pretty.Sdump(msg))
-		}
-	}
-	// make sure eth protocol version is set for negotiation
-	if c.negotiatedProtoVersion == 0 {
-		return nil, fmt.Errorf("eth protocol version must be set in Conn")
-	}
-	if status == nil {
-		// default status message
-		status = &Status{
-			ProtocolVersion: uint32(c.negotiatedProtoVersion),
-			NetworkID:       chain.chainConfig.ChainID.Uint64(),
-			TD:              chain.TD(),
-			Head:            chain.blocks[chain.Len()-1].Hash(),
-			Genesis:         chain.blocks[0].Hash(),
-			ForkID:          chain.ForkID(),
-		}
-	}
-	if err := c.Write(status); err != nil {
-		return nil, fmt.Errorf("write to connection failed: %v", err)
-	}
-	return message, nil
-}
+//func (c *Conn) statusExchange(chain *Chain, status *Status) (Message, error) {
+//	defer c.SetDeadline(time.Time{})
+//	c.SetDeadline(time.Now().Add(20 * time.Second))
+//
+//	// read status message from client
+//	var message Message
+//loop:
+//	for {
+//		switch msg := c.Read().(type) {
+//		case *Status:
+//			if have, want := msg.Head, chain.blocks[chain.Len()-1].Hash(); have != want {
+//				return nil, fmt.Errorf("wrong head block in status, want:  %#x (block %d) have %#x",
+//					want, chain.blocks[chain.Len()-1].NumberU64(), have)
+//			}
+//			if have, want := msg.TD.Cmp(chain.TD()), 0; have != want {
+//				return nil, fmt.Errorf("wrong TD in status: have %v want %v", have, want)
+//			}
+//			if have, want := msg.ForkID, chain.ForkID(); !reflect.DeepEqual(have, want) {
+//				return nil, fmt.Errorf("wrong fork ID in status: have %v, want %v", have, want)
+//			}
+//			if have, want := msg.ProtocolVersion, c.ourHighestProtoVersion; have != uint32(want) {
+//				return nil, fmt.Errorf("wrong protocol version: have %v, want %v", have, want)
+//			}
+//			message = msg
+//			break loop
+//		case *Disconnect:
+//			return nil, fmt.Errorf("disconnect received: %v", msg.Reason)
+//		case *Ping:
+//			c.Write(&Pong{}) // TODO (renaynay): in the future, this should be an error
+//			// (PINGs should not be a response upon fresh connection)
+//		default:
+//			return nil, fmt.Errorf("bad status message: %s", pretty.Sdump(msg))
+//		}
+//	}
+//	// make sure eth protocol version is set for negotiation
+//	if c.negotiatedProtoVersion == 0 {
+//		return nil, fmt.Errorf("eth protocol version must be set in Conn")
+//	}
+//	if status == nil {
+//		// default status message
+//		status = &Status{
+//			ProtocolVersion: uint32(c.negotiatedProtoVersion),
+//			NetworkID:       chain.chainConfig.ChainID.Uint64(),
+//			TD:              chain.TD(),
+//			Head:            chain.blocks[chain.Len()-1].Hash(),
+//			Genesis:         chain.blocks[0].Hash(),
+//			ForkID:          chain.ForkID(),
+//		}
+//	}
+//	if err := c.Write(status); err != nil {
+//		return nil, fmt.Errorf("write to connection failed: %v", err)
+//	}
+//	return message, nil
+//}
 
 // statusExchangeObft performs a `StatusMsg` message exchange with the given node.
 func (c *Conn) statusObftExchange(chain *Chain, status *StatusObft) (Message, error) {
@@ -401,21 +401,46 @@ func (s *Suite) createSendAndRecvConns(isEth66 bool, isObft bool) (*Conn, *Conn,
 	return sendConn, recvConn, nil
 }
 
-func (c *Conn) readAndServe(chain *Chain, timeout time.Duration) Message {
-	if c.negotiatedProtoVersion == 66 {
-		_, msg := c.readAndServe66(chain, timeout)
-		return msg
-	}
-	return c.readAndServe65(chain, timeout)
-}
+//func (c *Conn) readAndServe(chain *Chain, timeout time.Duration) Message {
+//	if c.negotiatedProtoVersion == 66 {
+//		_, msg := c.readAndServe66(chain, timeout)
+//		return msg
+//	}
+//	return c.readAndServe65(chain, timeout)
+//}
 
 // readAndServe serves GetBlockHeaders requests while waiting
 // on another message from the node.
-func (c *Conn) readAndServe65(chain *Chain, timeout time.Duration) Message {
+//func (c *Conn) readAndServe65(chain *Chain, timeout time.Duration) Message {
+//	start := time.Now()
+//	for time.Since(start) < timeout {
+//		c.SetReadDeadline(time.Now().Add(5 * time.Second))
+//		switch msg := c.Read().(type) {
+//		case *Ping:
+//			c.Write(&Pong{})
+//		case *GetBlockHeaders:
+//			req := *msg
+//			headers, err := chain.GetHeaders(req)
+//			if err != nil {
+//				return errorf("could not get headers for inbound header request: %v", err)
+//			}
+//			if err := c.Write(headers); err != nil {
+//				return errorf("could not write to connection: %v", err)
+//			}
+//		default:
+//			return msg
+//		}
+//	}
+//	return errorf("no message received within %v", timeout)
+//}
+
+// readAndServe serves GetBlockHeaders requests while waiting
+// on another message from the node.
+func (c *Conn) readAndServeObft(chain *Chain, timeout time.Duration) Message {
 	start := time.Now()
 	for time.Since(start) < timeout {
 		c.SetReadDeadline(time.Now().Add(5 * time.Second))
-		switch msg := c.Read().(type) {
+		switch msg := c.ReadObft().(type) {
 		case *Ping:
 			c.Write(&Pong{})
 		case *GetBlockHeaders:
@@ -436,12 +461,41 @@ func (c *Conn) readAndServe65(chain *Chain, timeout time.Duration) Message {
 
 // readAndServe66 serves eth66 GetBlockHeaders requests while waiting
 // on another message from the node.
-func (c *Conn) readAndServe66(chain *Chain, timeout time.Duration) (uint64, Message) {
+//func (c *Conn) readAndServe66(chain *Chain, timeout time.Duration) (uint64, Message) {
+//	start := time.Now()
+//	for time.Since(start) < timeout {
+//		c.SetReadDeadline(time.Now().Add(10 * time.Second))
+//
+//		reqID, msg := c.Read66()
+//
+//		switch msg := msg.(type) {
+//		case *Ping:
+//			c.Write(&Pong{})
+//		case GetBlockHeaders:
+//			headers, err := chain.GetHeaders(msg)
+//			if err != nil {
+//				return 0, errorf("could not get headers for inbound header request: %v", err)
+//			}
+//			resp := &eth.BlockHeadersPacket66{
+//				RequestId:          reqID,
+//				BlockHeadersPacket: eth.BlockHeadersPacket(headers),
+//			}
+//			if err := c.Write66(resp, BlockHeaders{}.Code()); err != nil {
+//				return 0, errorf("could not write to connection: %v", err)
+//			}
+//		default:
+//			return reqID, msg
+//		}
+//	}
+//	return 0, errorf("no message received within %v", timeout)
+//}
+
+func (c *Conn) readAndServe66Obft(chain *Chain, timeout time.Duration) (uint64, Message) {
 	start := time.Now()
 	for time.Since(start) < timeout {
 		c.SetReadDeadline(time.Now().Add(10 * time.Second))
 
-		reqID, msg := c.Read66()
+		reqID, msg := c.Read66Obft()
 
 		switch msg := msg.(type) {
 		case *Ping:
@@ -455,7 +509,7 @@ func (c *Conn) readAndServe66(chain *Chain, timeout time.Duration) (uint64, Mess
 				RequestId:          reqID,
 				BlockHeadersPacket: eth.BlockHeadersPacket(headers),
 			}
-			if err := c.Write66(resp, BlockHeaders{}.Code()); err != nil {
+			if err := c.Write66Obft(resp, BlockHeaders{}.Code()); err != nil {
 				return 0, errorf("could not write to connection: %v", err)
 			}
 		default:
@@ -466,17 +520,36 @@ func (c *Conn) readAndServe66(chain *Chain, timeout time.Duration) (uint64, Mess
 }
 
 // headersRequest executes the given `GetBlockHeaders` request.
-func (c *Conn) headersRequest(request *GetBlockHeaders, chain *Chain, isEth66 bool, reqID uint64) (BlockHeaders, error) {
+//func (c *Conn) headersRequest(request *GetBlockHeaders, chain *Chain, isEth66 bool, reqID uint64) (BlockHeaders, error) {
+//	defer c.SetReadDeadline(time.Time{})
+//	c.SetReadDeadline(time.Now().Add(20 * time.Second))
+//	// if on eth66 connection, perform eth66 GetBlockHeaders request
+//	if isEth66 {
+//		return getBlockHeaders66(chain, c, request, reqID)
+//	}
+//	if err := c.Write(request); err != nil {
+//		return nil, err
+//	}
+//	switch msg := c.readAndServe(chain, timeout).(type) {
+//	case *BlockHeaders:
+//		return *msg, nil
+//	default:
+//		return nil, fmt.Errorf("invalid message: %s", pretty.Sdump(msg))
+//	}
+//}
+
+// headersRequest executes the given `GetBlockHeaders` request.
+func (c *Conn) headersRequestObft(request *GetBlockHeaders, chain *Chain, isEth66 bool, reqID uint64) (BlockHeaders, error) {
 	defer c.SetReadDeadline(time.Time{})
 	c.SetReadDeadline(time.Now().Add(20 * time.Second))
 	// if on eth66 connection, perform eth66 GetBlockHeaders request
 	if isEth66 {
-		return getBlockHeaders66(chain, c, request, reqID)
+		return getBlockHeaders66Obft(chain, c, request, reqID)
 	}
 	if err := c.Write(request); err != nil {
 		return nil, err
 	}
-	switch msg := c.readAndServe(chain, timeout).(type) {
+	switch msg := c.readAndServeObft(chain, timeout).(type) {
 	case *BlockHeaders:
 		return *msg, nil
 	default:
@@ -485,18 +558,37 @@ func (c *Conn) headersRequest(request *GetBlockHeaders, chain *Chain, isEth66 bo
 }
 
 // getBlockHeaders66 executes the given `GetBlockHeaders` request over the eth66 protocol.
-func getBlockHeaders66(chain *Chain, conn *Conn, request *GetBlockHeaders, id uint64) (BlockHeaders, error) {
+//func getBlockHeaders66(chain *Chain, conn *Conn, request *GetBlockHeaders, id uint64) (BlockHeaders, error) {
+//	// write request
+//	packet := eth.GetBlockHeadersPacket(*request)
+//	req := &eth.GetBlockHeadersPacket66{
+//		RequestId:             id,
+//		GetBlockHeadersPacket: &packet,
+//	}
+//	if err := conn.Write66(req, GetBlockHeaders{}.Code()); err != nil {
+//		return nil, fmt.Errorf("could not write to connection: %v", err)
+//	}
+//	// wait for response
+//	msg := conn.waitForResponse(chain, timeout, req.RequestId)
+//	headers, ok := msg.(BlockHeaders)
+//	if !ok {
+//		return nil, fmt.Errorf("unexpected message received: %s", pretty.Sdump(msg))
+//	}
+//	return headers, nil
+//}
+//etBlockHeaders66 executes the given `GetBlockHeaders` request over the eth66 protocol.
+func getBlockHeaders66Obft(chain *Chain, conn *Conn, request *GetBlockHeaders, id uint64) (BlockHeaders, error) {
 	// write request
 	packet := eth.GetBlockHeadersPacket(*request)
 	req := &eth.GetBlockHeadersPacket66{
 		RequestId:             id,
 		GetBlockHeadersPacket: &packet,
 	}
-	if err := conn.Write66(req, GetBlockHeaders{}.Code()); err != nil {
+	if err := conn.Write66Obft(req, GetBlockHeaders{}.Code()); err != nil {
 		return nil, fmt.Errorf("could not write to connection: %v", err)
 	}
 	// wait for response
-	msg := conn.waitForResponse(chain, timeout, req.RequestId)
+	msg := conn.waitForResponseObft(chain, timeout, req.RequestId)
 	headers, ok := msg.(BlockHeaders)
 	if !ok {
 		return nil, fmt.Errorf("unexpected message received: %s", pretty.Sdump(msg))
@@ -511,18 +603,63 @@ func headersMatch(expected BlockHeaders, headers BlockHeaders) bool {
 
 // waitForResponse reads from the connection until a response with the expected
 // request ID is received.
-func (c *Conn) waitForResponse(chain *Chain, timeout time.Duration, requestID uint64) Message {
+//func (c *Conn) waitForResponse(chain *Chain, timeout time.Duration, requestID uint64) Message {
+//	for {
+//		id, msg := c.readAndServe66(chain, timeout)
+//		if id == requestID {
+//			return msg
+//		}
+//	}
+//}
+
+// waitForResponse reads from the connection until a response with the expected
+// request ID is received.
+func (c *Conn) waitForResponseObft(chain *Chain, timeout time.Duration, requestID uint64) Message {
 	for {
-		id, msg := c.readAndServe66(chain, timeout)
+		id, msg := c.readAndServe66Obft(chain, timeout)
 		if id == requestID {
 			return msg
 		}
 	}
 }
+//// sendNextBlock broadcasts the next block in the chain and waits
+//// for the node to propagate the block and import it into its chain.
+//func (s *Suite) sendNextBlock(isEth66 bool, isObft bool) error {
+//	// set up sending and receiving connections
+//	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
+//	if err != nil {
+//		return err
+//	}
+//	defer sendConn.Close()
+//	defer recvConn.Close()
+//	if err = sendConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	if err = recvConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	// create new block announcement
+//	nextBlock := s.fullChain.blocks[s.chain.Len()]
+//	blockAnnouncement := &NewBlock{
+//		Block: nextBlock,
+//		TD:    s.fullChain.TotalDifficultyAt(s.chain.Len()),
+//	}
+//	// send announcement and wait for node to request the header
+//	if err = s.testAnnounce(sendConn, recvConn, blockAnnouncement); err != nil {
+//		return fmt.Errorf("failed to announce block: %v", err)
+//	}
+//	// wait for client to update its chain
+//	if err = s.waitForBlockImport(recvConn, nextBlock, isEth66); err != nil {
+//		return fmt.Errorf("failed to receive confirmation of block import: %v", err)
+//	}
+//	// update test suite chain
+//	s.chain.blocks = append(s.chain.blocks, nextBlock)
+//	return nil
+//}
 
 // sendNextBlock broadcasts the next block in the chain and waits
 // for the node to propagate the block and import it into its chain.
-func (s *Suite) sendNextBlock(isEth66 bool, isObft bool) error {
+func (s *Suite) sendNextBlockObft(isEth66 bool, isObft bool) error {
 	// set up sending and receiving connections
 	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
 	if err != nil {
@@ -530,10 +667,10 @@ func (s *Suite) sendNextBlock(isEth66 bool, isObft bool) error {
 	}
 	defer sendConn.Close()
 	defer recvConn.Close()
-	if err = sendConn.peer(s.chain, nil); err != nil {
+	if err = sendConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
-	if err = recvConn.peer(s.chain, nil); err != nil {
+	if err = recvConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// create new block announcement
@@ -543,11 +680,11 @@ func (s *Suite) sendNextBlock(isEth66 bool, isObft bool) error {
 		TD:    s.fullChain.TotalDifficultyAt(s.chain.Len()),
 	}
 	// send announcement and wait for node to request the header
-	if err = s.testAnnounce(sendConn, recvConn, blockAnnouncement); err != nil {
+	if err = s.testAnnounceObft(sendConn, recvConn, blockAnnouncement); err != nil {
 		return fmt.Errorf("failed to announce block: %v", err)
 	}
 	// wait for client to update its chain
-	if err = s.waitForBlockImport(recvConn, nextBlock, isEth66); err != nil {
+	if err = s.waitForBlockImportObft(recvConn, nextBlock, isEth66); err != nil {
 		return fmt.Errorf("failed to receive confirmation of block import: %v", err)
 	}
 	// update test suite chain
@@ -557,17 +694,50 @@ func (s *Suite) sendNextBlock(isEth66 bool, isObft bool) error {
 
 // testAnnounce writes a block announcement to the node and waits for the node
 // to propagate it.
-func (s *Suite) testAnnounce(sendConn, receiveConn *Conn, blockAnnouncement *NewBlock) error {
+//func (s *Suite) testAnnounce(sendConn, receiveConn *Conn, blockAnnouncement *NewBlock) error {
+//	if err := sendConn.Write(blockAnnouncement); err != nil {
+//		return fmt.Errorf("could not write to connection: %v", err)
+//	}
+//	return s.waitAnnounce(receiveConn, blockAnnouncement)
+//}
+
+func (s *Suite) testAnnounceObft(sendConn, receiveConn *Conn, blockAnnouncement *NewBlock) error {
 	if err := sendConn.Write(blockAnnouncement); err != nil {
 		return fmt.Errorf("could not write to connection: %v", err)
 	}
-	return s.waitAnnounce(receiveConn, blockAnnouncement)
+	return s.waitAnnounceObft(receiveConn, blockAnnouncement)
 }
-
 // waitAnnounce waits for a NewBlock or NewBlockHashes announcement from the node.
-func (s *Suite) waitAnnounce(conn *Conn, blockAnnouncement *NewBlock) error {
+//func (s *Suite) waitAnnounce(conn *Conn, blockAnnouncement *NewBlock) error {
+//	for {
+//		switch msg := conn.readAndServe(s.chain, timeout).(type) {
+//		case *NewBlock:
+//			if !reflect.DeepEqual(blockAnnouncement.Block.Header(), msg.Block.Header()) {
+//				return fmt.Errorf("wrong header in block announcement: \nexpected %v "+
+//					"\ngot %v", blockAnnouncement.Block.Header(), msg.Block.Header())
+//			}
+//			if !reflect.DeepEqual(blockAnnouncement.TD, msg.TD) {
+//				return fmt.Errorf("wrong TD in announcement: expected %v, got %v", blockAnnouncement.TD, msg.TD)
+//			}
+//			return nil
+//		case *NewBlockHashes:
+//			hashes := *msg
+//			if blockAnnouncement.Block.Hash() != hashes[0].Hash {
+//				return fmt.Errorf("wrong block hash in announcement: expected %v, got %v", blockAnnouncement.Block.Hash(), hashes[0].Hash)
+//			}
+//			return nil
+//		case *NewPooledTransactionHashes:
+//			// ignore tx announcements from previous tests
+//			continue
+//		default:
+//			return fmt.Errorf("unexpected: %s", pretty.Sdump(msg))
+//		}
+//	}
+//}
+
+func (s *Suite) waitAnnounceObft(conn *Conn, blockAnnouncement *NewBlock) error {
 	for {
-		switch msg := conn.readAndServe(s.chain, timeout).(type) {
+		switch msg := conn.readAndServeObft(s.chain, timeout).(type) {
 		case *NewBlock:
 			if !reflect.DeepEqual(blockAnnouncement.Block.Header(), msg.Block.Header()) {
 				return fmt.Errorf("wrong header in block announcement: \nexpected %v "+
@@ -592,7 +762,46 @@ func (s *Suite) waitAnnounce(conn *Conn, blockAnnouncement *NewBlock) error {
 	}
 }
 
-func (s *Suite) waitForBlockImport(conn *Conn, block *types.Block, isEth66 bool) error {
+//func (s *Suite) waitForBlockImport(conn *Conn, block *types.Block, isEth66 bool) error {
+//	defer conn.SetReadDeadline(time.Time{})
+//	conn.SetReadDeadline(time.Now().Add(20 * time.Second))
+//	// create request
+//	req := &GetBlockHeaders{
+//		Origin: eth.HashOrNumber{
+//			Hash: block.Hash(),
+//		},
+//		Amount: 1,
+//	}
+//	// loop until BlockHeaders response contains desired block, confirming the
+//	// node imported the block
+//	for {
+//		var (
+//			headers BlockHeaders
+//			err     error
+//		)
+//		if isEth66 {
+//			requestID := uint64(54)
+//			headers, err = conn.headersRequest(req, s.chain, eth66, requestID)
+//		} else {
+//			headers, err = conn.headersRequest(req, s.chain, eth65, 0)
+//		}
+//		if err != nil {
+//			return fmt.Errorf("GetBlockHeader request failed: %v", err)
+//		}
+//		// if headers response is empty, node hasn't imported block yet, try again
+//		if len(headers) == 0 {
+//			time.Sleep(100 * time.Millisecond)
+//			continue
+//		}
+//		if !reflect.DeepEqual(block.Header(), headers[0]) {
+//			return fmt.Errorf("wrong header returned: wanted %v, got %v", block.Header(), headers[0])
+//		}
+//		return nil
+//	}
+//}
+
+
+func (s *Suite) waitForBlockImportObft(conn *Conn, block *types.Block, isEth66 bool) error {
 	defer conn.SetReadDeadline(time.Time{})
 	conn.SetReadDeadline(time.Now().Add(20 * time.Second))
 	// create request
@@ -611,9 +820,9 @@ func (s *Suite) waitForBlockImport(conn *Conn, block *types.Block, isEth66 bool)
 		)
 		if isEth66 {
 			requestID := uint64(54)
-			headers, err = conn.headersRequest(req, s.chain, eth66, requestID)
+			headers, err = conn.headersRequestObft(req, s.chain, eth66, requestID)
 		} else {
-			headers, err = conn.headersRequest(req, s.chain, eth65, 0)
+			headers, err = conn.headersRequestObft(req, s.chain, eth65, 0)
 		}
 		if err != nil {
 			return fmt.Errorf("GetBlockHeader request failed: %v", err)
@@ -630,17 +839,64 @@ func (s *Suite) waitForBlockImport(conn *Conn, block *types.Block, isEth66 bool)
 	}
 }
 
-func (s *Suite) oldAnnounce(isEth66 bool, isObft bool) error {
+//func (s *Suite) oldAnnounce(isEth66 bool, isObft bool) error {
+//	sendConn, receiveConn, err := s.createSendAndRecvConns(isEth66, isObft)
+//	if err != nil {
+//		return err
+//	}
+//	defer sendConn.Close()
+//	defer receiveConn.Close()
+//	if err := sendConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	if err := receiveConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	// create old block announcement
+//	oldBlockAnnounce := &NewBlock{
+//		Block: s.chain.blocks[len(s.chain.blocks)/2],
+//		TD:    s.chain.blocks[len(s.chain.blocks)/2].Difficulty(),
+//	}
+//	if err := sendConn.Write(oldBlockAnnounce); err != nil {
+//		return fmt.Errorf("could not write to connection: %v", err)
+//	}
+//	// wait to see if the announcement is propagated
+//	switch msg := receiveConn.readAndServe(s.chain, time.Second*8).(type) {
+//	case *NewBlock:
+//		block := *msg
+//		if block.Block.Hash() == oldBlockAnnounce.Block.Hash() {
+//			return fmt.Errorf("unexpected: block propagated: %s", pretty.Sdump(msg))
+//		}
+//	case *NewBlockHashes:
+//		hashes := *msg
+//		for _, hash := range hashes {
+//			if hash.Hash == oldBlockAnnounce.Block.Hash() {
+//				return fmt.Errorf("unexpected: block announced: %s", pretty.Sdump(msg))
+//			}
+//		}
+//	case *Error:
+//		errMsg := *msg
+//		// check to make sure error is timeout (propagation didn't come through == test successful)
+//		if !strings.Contains(errMsg.String(), "timeout") {
+//			return fmt.Errorf("unexpected error: %v", pretty.Sdump(msg))
+//		}
+//	default:
+//		return fmt.Errorf("unexpected: %s", pretty.Sdump(msg))
+//	}
+//	return nil
+//}
+
+func (s *Suite) oldAnnounceObft(isEth66 bool, isObft bool) error {
 	sendConn, receiveConn, err := s.createSendAndRecvConns(isEth66, isObft)
 	if err != nil {
 		return err
 	}
 	defer sendConn.Close()
 	defer receiveConn.Close()
-	if err := sendConn.peer(s.chain, nil); err != nil {
+	if err := sendConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
-	if err := receiveConn.peer(s.chain, nil); err != nil {
+	if err := receiveConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// create old block announcement
@@ -652,7 +908,7 @@ func (s *Suite) oldAnnounce(isEth66 bool, isObft bool) error {
 		return fmt.Errorf("could not write to connection: %v", err)
 	}
 	// wait to see if the announcement is propagated
-	switch msg := receiveConn.readAndServe(s.chain, time.Second*8).(type) {
+	switch msg := receiveConn.readAndServeObft(s.chain, time.Second*8).(type) {
 	case *NewBlock:
 		block := *msg
 		if block.Block.Hash() == oldBlockAnnounce.Block.Hash() {
@@ -677,27 +933,108 @@ func (s *Suite) oldAnnounce(isEth66 bool, isObft bool) error {
 	return nil
 }
 
-func (s *Suite) maliciousHandshakes(t *utesting.T, isEth66 bool, isObft bool) error {
+//func (s *Suite) maliciousHandshakes(t *utesting.T, isEth66 bool) error {
+//	var (
+//		conn *Conn
+//		err  error
+//	)
+//	if isEth66 {
+//		conn, err = s.dial66()
+//		if err != nil {
+//			return fmt.Errorf("dial failed: %v", err)
+//		}
+//	} else {
+//		conn, err = s.dial()
+//		if err != nil {
+//			return fmt.Errorf("dial failed: %v", err)
+//		}
+//	}
+//	defer conn.Close()
+//	// write hello to client
+//	pub0 := crypto.FromECDSAPub(&conn.ourKey.PublicKey)[1:]
+//	handshakes := []*Hello{
+//		{
+//			Version: 5,
+//			Caps: []p2p.Cap{
+//				{Name: largeString(2), Version: 64},
+//			},
+//			ID: pub0,
+//		},
+//		{
+//			Version: 5,
+//			Caps: []p2p.Cap{
+//				{Name: "eth", Version: 64},
+//				{Name: "eth", Version: 65},
+//			},
+//			ID: append(pub0, byte(0)),
+//		},
+//		{
+//			Version: 5,
+//			Caps: []p2p.Cap{
+//				{Name: "eth", Version: 64},
+//				{Name: "eth", Version: 65},
+//			},
+//			ID: append(pub0, pub0...),
+//		},
+//		{
+//			Version: 5,
+//			Caps: []p2p.Cap{
+//				{Name: "eth", Version: 64},
+//				{Name: "eth", Version: 65},
+//			},
+//			ID: largeBuffer(2),
+//		},
+//		{
+//			Version: 5,
+//			Caps: []p2p.Cap{
+//				{Name: largeString(2), Version: 64},
+//			},
+//			ID: largeBuffer(2),
+//		},
+//	}
+//	for i, handshake := range handshakes {
+//		t.Logf("Testing malicious handshake %v\n", i)
+//		if err := conn.Write(handshake); err != nil {
+//			return fmt.Errorf("could not write to connection: %v", err)
+//		}
+//		// check that the peer disconnected
+//		for i := 0; i < 2; i++ {
+//			switch msg := conn.readAndServe(s.chain, 20*time.Second).(type) {
+//			case *Disconnect:
+//			case *Error:
+//			case *Hello:
+//				// Discard one hello as Hello's are sent concurrently
+//				continue
+//			default:
+//				return fmt.Errorf("unexpected: %s", pretty.Sdump(msg))
+//			}
+//		}
+//		// dial for the next round
+//		if isEth66 {
+//			conn, err = s.dial66()
+//			if err != nil {
+//				return fmt.Errorf("dial failed: %v", err)
+//			}
+//		} else {
+//			conn, err = s.dial()
+//			if err != nil {
+//				return fmt.Errorf("dial failed: %v", err)
+//			}
+//		}
+//	}
+//	return nil
+//}
+
+func (s *Suite) maliciousHandshakesObft(t *utesting.T, isEth66 bool) error {
 	var (
 		conn *Conn
 		err  error
 	)
-	if isObft {
-		conn, err = s.dialObft()
-		if err != nil {
+	conn, err = s.dialObft()
+	if err != nil {
 			return fmt.Errorf("dial failed: %v", err)
 		}
-	} else if isEth66 {
-		conn, err = s.dial66()
-		if err != nil {
-			return fmt.Errorf("dial failed: %v", err)
-		}
-	} else {
-		conn, err = s.dial()
-		if err != nil {
-			return fmt.Errorf("dial failed: %v", err)
-		}
-	}
+
 	defer conn.Close()
 	// write hello to client
 	pub0 := crypto.FromECDSAPub(&conn.ourKey.PublicKey)[1:]
@@ -748,7 +1085,7 @@ func (s *Suite) maliciousHandshakes(t *utesting.T, isEth66 bool, isObft bool) er
 		}
 		// check that the peer disconnected
 		for i := 0; i < 2; i++ {
-			switch msg := conn.readAndServe(s.chain, 20*time.Second).(type) {
+			switch msg := conn.readAndServeObft(s.chain, 20*time.Second).(type) {
 			case *Disconnect:
 			case *Error:
 			case *Hello:
@@ -774,30 +1111,61 @@ func (s *Suite) maliciousHandshakes(t *utesting.T, isEth66 bool, isObft bool) er
 	return nil
 }
 
-func (s *Suite) maliciousStatus(conn *Conn) error {
+//func (s *Suite) maliciousStatus(conn *Conn) error {
+//	if err := conn.handshake(); err != nil {
+//		return fmt.Errorf("handshake failed: %v", err)
+//	}
+//	status := &Status{
+//		ProtocolVersion: uint32(conn.negotiatedProtoVersion),
+//		NetworkID:       s.chain.chainConfig.ChainID.Uint64(),
+//		TD:              largeNumber(2),
+//		Head:            s.chain.blocks[s.chain.Len()-1].Hash(),
+//		Genesis:         s.chain.blocks[0].Hash(),
+//		ForkID:          s.chain.ForkID(),
+//	}
+//	// get status
+//	msg, err := conn.statusExchange(s.chain, status)
+//	if err != nil {
+//		return fmt.Errorf("status exchange failed: %v", err)
+//	}
+//	switch msg := msg.(type) {
+//	case *Status:
+//	default:
+//		return fmt.Errorf("expected status, got: %#v ", msg)
+//	}
+//	// wait for disconnect
+//	switch msg := conn.readAndServe(s.chain, timeout).(type) {
+//	case *Disconnect:
+//		return nil
+//	case *Error:
+//		return nil
+//	default:
+//		return fmt.Errorf("expected disconnect, got: %s", pretty.Sdump(msg))
+//	}
+//}
+
+func (s *Suite) maliciousStatusObft(conn *Conn) error {
 	if err := conn.handshake(); err != nil {
 		return fmt.Errorf("handshake failed: %v", err)
 	}
-	status := &Status{
+	status := &StatusObft{
 		ProtocolVersion: uint32(conn.negotiatedProtoVersion),
 		NetworkID:       s.chain.chainConfig.ChainID.Uint64(),
-		TD:              largeNumber(2),
-		Head:            s.chain.blocks[s.chain.Len()-1].Hash(),
-		Genesis:         s.chain.blocks[0].Hash(),
-		ForkID:          s.chain.ForkID(),
+		BestHash:            s.chain.blocks[s.chain.Len()-1].Hash(),
+		GenesisHash:         s.chain.blocks[0].Hash(),
 	}
 	// get status
-	msg, err := conn.statusExchange(s.chain, status)
+	msg, err := conn.statusObftExchange(s.chain, status)
 	if err != nil {
 		return fmt.Errorf("status exchange failed: %v", err)
 	}
 	switch msg := msg.(type) {
-	case *Status:
+	case *StatusObft:
 	default:
 		return fmt.Errorf("expected status, got: %#v ", msg)
 	}
 	// wait for disconnect
-	switch msg := conn.readAndServe(s.chain, timeout).(type) {
+	switch msg := conn.readAndServeObft(s.chain, timeout).(type) {
 	case *Disconnect:
 		return nil
 	case *Error:
@@ -807,7 +1175,120 @@ func (s *Suite) maliciousStatus(conn *Conn) error {
 	}
 }
 
-func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
+//func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
+//	// create connections
+//	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
+//	if err != nil {
+//		return fmt.Errorf("failed to create connections: %v", err)
+//	}
+//	defer sendConn.Close()
+//	defer recvConn.Close()
+//	if err := sendConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	if err := recvConn.peer(s.chain, nil); err != nil {
+//		return fmt.Errorf("peering failed: %v", err)
+//	}
+//	// create NewBlockHashes announcement
+//	type anno struct {
+//		Hash   common.Hash // Hash of one particular block being announced
+//		Number uint64      // Number of one particular block being announced
+//	}
+//	nextBlock := s.fullChain.blocks[s.chain.Len()]
+//	announcement := anno{Hash: nextBlock.Hash(), Number: nextBlock.Number().Uint64()}
+//	newBlockHash := &NewBlockHashes{announcement}
+//	if err := sendConn.Write(newBlockHash); err != nil {
+//		return fmt.Errorf("failed to write to connection: %v", err)
+//	}
+//	// Announcement sent, now wait for a header request
+//	var (
+//		id             uint64
+//		msg            Message
+//		blockHeaderReq GetBlockHeaders
+//	)
+//	if isEth66 {
+//		id, msg = sendConn.Read66()
+//		switch msg := msg.(type) {
+//		case GetBlockHeaders:
+//			blockHeaderReq = msg
+//		default:
+//			return fmt.Errorf("unexpected %s", pretty.Sdump(msg))
+//		}
+//		if blockHeaderReq.Amount != 1 {
+//			return fmt.Errorf("unexpected number of block headers requested: %v", blockHeaderReq.Amount)
+//		}
+//		if blockHeaderReq.Origin.Hash != announcement.Hash {
+//			return fmt.Errorf("unexpected block header requested. Announced:\n %v\n Remote request:\n%v",
+//				pretty.Sdump(announcement),
+//				pretty.Sdump(blockHeaderReq))
+//		}
+//		if err := sendConn.Write66(&eth.BlockHeadersPacket66{
+//			RequestId: id,
+//			BlockHeadersPacket: eth.BlockHeadersPacket{
+//				nextBlock.Header(),
+//			},
+//		}, BlockHeaders{}.Code()); err != nil {
+//			return fmt.Errorf("failed to write to connection: %v", err)
+//		}
+//	} else {
+//		msg = sendConn.Read()
+//		switch msg := msg.(type) {
+//		case *GetBlockHeaders:
+//			blockHeaderReq = *msg
+//		default:
+//			return fmt.Errorf("unexpected %s", pretty.Sdump(msg))
+//		}
+//		if blockHeaderReq.Amount != 1 {
+//			return fmt.Errorf("unexpected number of block headers requested: %v", blockHeaderReq.Amount)
+//		}
+//		if blockHeaderReq.Origin.Hash != announcement.Hash {
+//			return fmt.Errorf("unexpected block header requested. Announced:\n %v\n Remote request:\n%v",
+//				pretty.Sdump(announcement),
+//				pretty.Sdump(blockHeaderReq))
+//		}
+//		if err := sendConn.Write(&BlockHeaders{nextBlock.Header()}); err != nil {
+//			return fmt.Errorf("failed to write to connection: %v", err)
+//		}
+//	}
+//	// wait for block announcement
+//	msg = recvConn.readAndServe(s.chain, timeout)
+//	switch msg := msg.(type) {
+//	case *NewBlockHashes:
+//		hashes := *msg
+//		if len(hashes) != 1 {
+//			return fmt.Errorf("unexpected new block hash announcement: wanted 1 announcement, got %d", len(hashes))
+//		}
+//		if nextBlock.Hash() != hashes[0].Hash {
+//			return fmt.Errorf("unexpected block hash announcement, wanted %v, got %v", nextBlock.Hash(),
+//				hashes[0].Hash)
+//		}
+//	case *NewBlock:
+//		// node should only propagate NewBlock without having requested the body if the body is empty
+//		nextBlockBody := nextBlock.Body()
+//		if len(nextBlockBody.Transactions) != 0 || len(nextBlockBody.Uncles) != 0 {
+//			return fmt.Errorf("unexpected non-empty new block propagated: %s", pretty.Sdump(msg))
+//		}
+//		if msg.Block.Hash() != nextBlock.Hash() {
+//			return fmt.Errorf("mismatched hash of propagated new block: wanted %v, got %v",
+//				nextBlock.Hash(), msg.Block.Hash())
+//		}
+//		// check to make sure header matches header that was sent to the node
+//		if !reflect.DeepEqual(nextBlock.Header(), msg.Block.Header()) {
+//			return fmt.Errorf("incorrect header received: wanted %v, got %v", nextBlock.Header(), msg.Block.Header())
+//		}
+//	default:
+//		return fmt.Errorf("unexpected: %s", pretty.Sdump(msg))
+//	}
+//	// confirm node imported block
+//	if err := s.waitForBlockImport(recvConn, nextBlock, isEth66); err != nil {
+//		return fmt.Errorf("error waiting for node to import new block: %v", err)
+//	}
+//	// update the chain
+//	s.chain.blocks = append(s.chain.blocks, nextBlock)
+//	return nil
+//}
+
+func (s *Suite) hashAnnounceObft(isEth66 bool, isObft bool) error {
 	// create connections
 	sendConn, recvConn, err := s.createSendAndRecvConns(isEth66, isObft)
 	if err != nil {
@@ -815,10 +1296,10 @@ func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
 	}
 	defer sendConn.Close()
 	defer recvConn.Close()
-	if err := sendConn.peer(s.chain, nil); err != nil {
+	if err := sendConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
-	if err := recvConn.peer(s.chain, nil); err != nil {
+	if err := recvConn.peerObft(s.chain, nil); err != nil {
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// create NewBlockHashes announcement
@@ -839,7 +1320,7 @@ func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
 		blockHeaderReq GetBlockHeaders
 	)
 	if isEth66 {
-		id, msg = sendConn.Read66()
+		id, msg = sendConn.Read66Obft()
 		switch msg := msg.(type) {
 		case GetBlockHeaders:
 			blockHeaderReq = msg
@@ -854,7 +1335,7 @@ func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
 				pretty.Sdump(announcement),
 				pretty.Sdump(blockHeaderReq))
 		}
-		if err := sendConn.Write66(&eth.BlockHeadersPacket66{
+		if err := sendConn.Write66Obft(&eth.BlockHeadersPacket66{
 			RequestId: id,
 			BlockHeadersPacket: eth.BlockHeadersPacket{
 				nextBlock.Header(),
@@ -883,7 +1364,7 @@ func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
 		}
 	}
 	// wait for block announcement
-	msg = recvConn.readAndServe(s.chain, timeout)
+	msg = recvConn.readAndServeObft(s.chain, timeout)
 	switch msg := msg.(type) {
 	case *NewBlockHashes:
 		hashes := *msg
@@ -912,7 +1393,7 @@ func (s *Suite) hashAnnounce(isEth66 bool, isObft bool) error {
 		return fmt.Errorf("unexpected: %s", pretty.Sdump(msg))
 	}
 	// confirm node imported block
-	if err := s.waitForBlockImport(recvConn, nextBlock, isEth66); err != nil {
+	if err := s.waitForBlockImportObft(recvConn, nextBlock, isEth66); err != nil {
 		return fmt.Errorf("error waiting for node to import new block: %v", err)
 	}
 	// update the chain
