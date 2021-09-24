@@ -486,7 +486,7 @@ func (s *Suite) TestGetBlockHeadersObft(t *utesting.T) {
 //TestGetBlockBodies tests whether the given node can respond to
 //a `GetBlockBodiesObft` request and that the response is accurate.
 func (s *Suite) TestGetBlockBodiesObft(t *utesting.T) {
-	conn, err := s.dial()
+	conn, err := s.dialObft()
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
