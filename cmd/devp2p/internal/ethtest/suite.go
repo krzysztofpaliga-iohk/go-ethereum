@@ -20,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/protocols/eth"
 	"github.com/ethereum/go-ethereum/internal/utesting"
 	"github.com/ethereum/go-ethereum/p2p/enode"
+	"time"
 )
 
 // Suite represents a structure used to test a node's conformance
@@ -130,7 +131,7 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "TestGetBlockHeadersObft", Fn: s.TestGetBlockHeadersObft},
 		{Name: "TestGetBlockBodiesObft", Fn: s.TestGetBlockBodiesObft},
 		{Name: "TestBroadcastObft", Fn: s.TestBroadcastObft},
-		//{Name: "TestLargeAnnounce", Fn: s.TestLargeAnnounce},
+		{Name: "TestLargeAnnounceObft", Fn: s.TestLargeAnnounceObft},
 		//{Name: "TestOldAnnounce", Fn: s.TestOldAnnounce},
 		//{Name: "TestBlockHashAnnounce", Fn: s.TestBlockHashAnnounce},
 		//{Name: "TestMaliciousHandshake", Fn: s.TestMaliciousHandshake},
@@ -562,7 +563,7 @@ func (s *Suite) TestGetBlockBodiesObft(t *utesting.T) {
 //TestBroadcast tests whether a block announcement is correctly
 //propagated to the given node's peer(s).
 func (s *Suite) TestBroadcastObft(t *utesting.T) {
-	if err := s.sendNextBlockObft(eth65, false); err != nil {
+	if err := s.sendNextBlockObft(); err != nil {
 		t.Fatalf("block broadcast failed: %v", err)
 	}
 }
@@ -620,6 +621,52 @@ func (s *Suite) TestBroadcastObft(t *utesting.T) {
 //		t.Fatalf("failed to broadcast next block: %v", err)
 //	}
 //}
+
+// TestLargeAnnounce tests the announcement mechanism with a large block.
+func (s *Suite) TestLargeAnnounceObft(t *utesting.T) {
+	nextBlock := len(s.chain.blocks)
+	blocks := []*NewBlock{
+		{
+			Block: largeBlock(),
+			TD:    s.fullChain.TotalDifficultyAt(nextBlock),
+		},
+		{
+			Block: s.fullChain.blocks[nextBlock],
+			TD:    largeNumber(2),
+		},
+		{
+			Block: largeBlock(),
+			TD:    largeNumber(2),
+		},
+	}
+
+	for i, blockAnnouncement := range blocks {
+		t.Logf("Testing malicious announcement: %v\n", i)
+		conn, err := s.dialObft()
+		if err != nil {
+			t.Fatalf("dial failed: %v", err)
+		}
+		if err = conn.peerObft(s.chain, nil); err != nil {
+			t.Fatalf("peering failed: %v", err)
+		}
+		if err = conn.Write(blockAnnouncement); err != nil {
+			t.Fatalf("could not write to connection: %v", err)
+		}
+		// Invalid announcement, check that peer disconnected
+		switch msg := conn.readAndServeObft(s.chain, time.Second*8).(type) {
+		case *Disconnect:
+		case *Error:
+			break
+		default:
+			t.Fatalf("unexpected: %s wanted disconnect", pretty.Sdump(msg))
+		}
+		conn.Close()
+	}
+	// Test the last block as a valid block
+	if err := s.sendNextBlockObft(); err != nil {
+		t.Fatalf("failed to broadcast next block: %v", err)
+	}
+}
 
 // TestLargeAnnounce66 tests the announcement mechanism with a large
 // block over the eth66 protocol.

@@ -638,7 +638,7 @@ func (c *Conn) waitForResponseObft(chain *Chain, timeout time.Duration, requestI
 
 // sendNextBlock broadcasts the next block in the chain and waits
 // for the node to propagate the block and import it into its chain.
-func (s *Suite) sendNextBlockObft(isEth66 bool, isObft bool) error {
+func (s *Suite) sendNextBlockObft() error {
 	// set up sending and receiving connections
 	sendConn, recvConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
@@ -663,7 +663,7 @@ func (s *Suite) sendNextBlockObft(isEth66 bool, isObft bool) error {
 		return fmt.Errorf("failed to announce block: %v", err)
 	}
 	// wait for client to update its chain
-	if err = s.waitForBlockImportObft(recvConn, nextBlock, isEth66); err != nil {
+	if err = s.waitForBlockImportObft(recvConn, nextBlock); err != nil {
 		return fmt.Errorf("failed to receive confirmation of block import: %v", err)
 	}
 	// update test suite chain
@@ -780,7 +780,7 @@ func (s *Suite) waitAnnounceObft(conn *Conn, blockAnnouncement *NewBlock) error 
 //	}
 //}
 
-func (s *Suite) waitForBlockImportObft(conn *Conn, block *types.Block, isEth66 bool) error {
+func (s *Suite) waitForBlockImportObft(conn *Conn, block *types.Block) error {
 	defer conn.SetReadDeadline(time.Time{})
 	conn.SetReadDeadline(time.Now().Add(20 * time.Second))
 	// create request
@@ -1369,7 +1369,7 @@ func (s *Suite) hashAnnounceObft(isEth66 bool, isObft bool) error {
 		return fmt.Errorf("unexpected: %s", pretty.Sdump(msg))
 	}
 	// confirm node imported block
-	if err := s.waitForBlockImportObft(recvConn, nextBlock, isEth66); err != nil {
+	if err := s.waitForBlockImportObft(recvConn, nextBlock); err != nil {
 		return fmt.Errorf("error waiting for node to import new block: %v", err)
 	}
 	// update the chain
