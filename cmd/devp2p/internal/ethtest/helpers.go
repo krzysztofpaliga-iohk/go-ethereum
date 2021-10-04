@@ -862,7 +862,7 @@ func (s *Suite) waitForBlockImportObft(conn *Conn, block *types.Block) error {
 //	return nil
 //}
 
-func (s *Suite) oldAnnounceObft(isEth66 bool, isObft bool) error {
+func (s *Suite) oldAnnounceObft() error {
 	sendConn, receiveConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
 		return err

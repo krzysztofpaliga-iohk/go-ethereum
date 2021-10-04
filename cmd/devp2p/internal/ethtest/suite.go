@@ -132,7 +132,7 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "TestGetBlockBodiesObft", Fn: s.TestGetBlockBodiesObft},
 		{Name: "TestBroadcastObft", Fn: s.TestBroadcastObft},
 		{Name: "TestLargeAnnounceObft", Fn: s.TestLargeAnnounceObft},
-		//{Name: "TestOldAnnounce", Fn: s.TestOldAnnounce},
+		{Name: "TestOldAnnounceObft", Fn: s.TestOldAnnounceObft},
 		//{Name: "TestBlockHashAnnounce", Fn: s.TestBlockHashAnnounce},
 		//{Name: "TestMaliciousHandshake", Fn: s.TestMaliciousHandshake},
 		//{Name: "TestMaliciousStatus", Fn: s.TestMaliciousStatus},
@@ -721,6 +721,13 @@ func (s *Suite) TestLargeAnnounceObft(t *utesting.T) {
 //		t.Fatal(err)
 //	}
 //}
+
+//TestOldAnnounceObft tests the announcement mechanism with an old block.
+func (s *Suite) TestOldAnnounceObft(t *utesting.T) {
+	if err := s.oldAnnounceObft(); err != nil {
+		t.Fatal(err)
+	}
+}
 
 // TestOldAnnounce66 tests the announcement mechanism with an old block,
 // over the eth66 protocol.
