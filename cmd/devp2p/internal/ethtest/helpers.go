@@ -1111,7 +1111,7 @@ func (s *Suite) maliciousHandshakesObft(t *utesting.T) error {
 //}
 
 func (s *Suite) maliciousStatusObft(conn *Conn) error {
-	if err := conn.handshake(); err != nil {
+	if err := conn.handshakeObft(); err != nil {
 		return fmt.Errorf("handshake failed: %v", err)
 	}
 	status := &StatusObft{
