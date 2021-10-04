@@ -323,10 +323,10 @@ loop:
 	for {
 		switch msg := c.ReadObft().(type) {
 		case *StatusObft:
-			if have, want := msg.BestHash, chain.blocks[chain.Len()-1].Hash(); have != want {
-				return nil, fmt.Errorf("wrong head block in status, want:  %#x (block %d) have %#x",
-					want, chain.blocks[chain.Len()-1].NumberU64(), have)
-			}
+			//if have, want := msg.BestHash, chain.blocks[chain.Len()-1].Hash(); have != want {
+			//	return nil, fmt.Errorf("wrong head block in status, want:  %#x (block %d) have %#x",
+			//		want, chain.blocks[chain.Len()-1].NumberU64(), have)
+			//}
 			if have, want := msg.ProtocolVersion, c.ourHighestProtoVersion; have != uint32(want) {
 				return nil, fmt.Errorf("wrong protocol version: have %v, want %v", have, want)
 			}
