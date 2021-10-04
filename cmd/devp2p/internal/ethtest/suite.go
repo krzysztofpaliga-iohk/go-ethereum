@@ -136,8 +136,9 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "TestBlockHashAnnounceObft", Fn: s.TestBlockHashAnnounceObft},
 		{Name: "TestMaliciousHandshakeObft", Fn: s.TestMaliciousHandshakeObft},
 		{Name: "TestMaliciousStatusObft", Fn: s.TestMaliciousStatusObft},
-		//{Name: "TestTransaction", Fn: s.TestTransaction},
-		//{Name: "TestMaliciousTx", Fn: s.TestMaliciousTx},
+		{Name: "TestTransactionObft", Fn: s.TestTransactionObft},
+		{Name: "TestMaliciousTxObft", Fn: s.TestMaliciousTxObft},
+		{Name:"EmptyTest", Fn:s.EmptyTest},
 	}
 }
 
@@ -830,6 +831,14 @@ func (s *Suite) TestMaliciousStatusObft(t *utesting.T) {
 //	}
 //}
 
+// TestTransaction sends a valid transaction to the node and
+// checks if the transaction gets propagated.
+func (s *Suite) TestTransactionObft(t *utesting.T) {
+	if err := s.sendSuccessfulTxsObft(t); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestTransaction66 sends a valid transaction to the node and
 // checks if the transaction gets propagated.
 //func (s *Suite) TestTransaction66(t *utesting.T) {
@@ -846,6 +855,17 @@ func (s *Suite) TestMaliciousStatusObft(t *utesting.T) {
 //	}
 //}
 
+// TestMaliciousTx sends several invalid transactions and tests whether
+// the node will propagate them.
+func (s *Suite) TestMaliciousTxObft(t *utesting.T) {
+	if err := s.sendMaliciousTxsObft(t); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func (s *Suite) EmptyTest(t *utesting.T) {
+
+}
 // TestMaliciousTx66 sends several invalid transactions and tests whether
 // the node will propagate them.
 //func (s *Suite) TestMaliciousTx66(t *utesting.T) {

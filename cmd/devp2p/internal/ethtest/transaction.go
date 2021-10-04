@@ -55,7 +55,7 @@ var faucetKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c666
 //	return nil
 //}
 
-func (s *Suite) sendSuccessfulTxsObft(t *utesting.T, isEth66 bool) error {
+func (s *Suite) sendSuccessfulTxsObft(t *utesting.T) error {
 	tests := []*types.Transaction{
 		getNextTxFromChain(s),
 		unknownTx(s),
@@ -71,7 +71,7 @@ func (s *Suite) sendSuccessfulTxsObft(t *utesting.T, isEth66 bool) error {
 			prevTx = tests[i-1]
 		}
 		// write tx to connection
-		if err := sendSuccessfulTxObft(s, tx, prevTx, isEth66); err != nil {
+		if err := sendSuccessfulTxObft(s, tx, prevTx); err != nil {
 			return fmt.Errorf("send successful tx test failed: %v", err)
 		}
 	}
@@ -195,7 +195,7 @@ func (s *Suite) sendSuccessfulTxsObft(t *utesting.T, isEth66 bool) error {
 	//	}
 	//}
 
-func sendSuccessfulTxObft(s *Suite, tx *types.Transaction, prevTx *types.Transaction, isEth66 bool) error {
+func sendSuccessfulTxObft(s *Suite, tx *types.Transaction, prevTx *types.Transaction) error {
 	sendConn, recvConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
 		return err
@@ -255,7 +255,7 @@ func sendSuccessfulTxObft(s *Suite, tx *types.Transaction, prevTx *types.Transac
 }
 
 
-func (s *Suite) sendMaliciousTxsObft(t *utesting.T, isEth66 bool, isObft bool) error {
+func (s *Suite) sendMaliciousTxsObft(t *utesting.T) error {
 	badTxs := []*types.Transaction{
 		getOldTxFromChain(s),
 		invalidNonceTx(s),
@@ -268,13 +268,9 @@ func (s *Suite) sendMaliciousTxsObft(t *utesting.T, isEth66 bool, isObft bool) e
 		recvConn *Conn
 		err      error
 	)
-	if isObft {
-		recvConn, err = s.dialObft()
-	} else if isEth66 {
-		recvConn, err = s.dial66()
-	} else {
-		recvConn, err = s.dial()
-	}
+
+	recvConn, err = s.dialObft()
+
 	if err != nil {
 		return fmt.Errorf("dial failed: %v", err)
 	}
@@ -284,7 +280,7 @@ func (s *Suite) sendMaliciousTxsObft(t *utesting.T, isEth66 bool, isObft bool) e
 	}
 	for i, tx := range badTxs {
 		t.Logf("Testing malicious tx propagation: %v\n", i)
-		if err = sendMaliciousTxObft(s, tx, isEth66, false); err != nil {
+		if err = sendMaliciousTxObft(s, tx); err != nil {
 			return fmt.Errorf("malicious tx test failed:\ntx: %v\nerror: %v", tx, err)
 		}
 	}
@@ -319,19 +315,15 @@ func (s *Suite) sendMaliciousTxsObft(t *utesting.T, isEth66 bool, isObft bool) e
 //	return nil
 //}
 
-func sendMaliciousTxObft(s *Suite, tx *types.Transaction, isEth66 bool, isObft bool) error {
+func sendMaliciousTxObft(s *Suite, tx *types.Transaction) error {
 	// setup connection
 	var (
 		conn *Conn
 		err  error
 	)
-	if isObft {
-		conn, err = s.dialObft()
-	} else if isEth66 {
-		conn, err = s.dial66()
-	} else {
-		conn, err = s.dial()
-	}
+
+	conn, err = s.dialObft()
+
 	if err != nil {
 		return fmt.Errorf("dial failed: %v", err)
 	}
@@ -340,7 +332,7 @@ func sendMaliciousTxObft(s *Suite, tx *types.Transaction, isEth66 bool, isObft b
 		return fmt.Errorf("peering failed: %v", err)
 	}
 	// write malicious tx
-	if err = conn.Write(&Transactions{tx}); err != nil {
+	if err = conn.WriteOBFT(&Transactions{tx}); err != nil {
 		return fmt.Errorf("failed to write to connection: %v", err)
 	}
 	return nil
