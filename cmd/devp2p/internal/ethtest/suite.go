@@ -746,7 +746,7 @@ func (s *Suite) TestOldAnnounceObft(t *utesting.T) {
 //}
 
 //TestBlockHashAnnounce sends a new block hash announcement and expects
-the node to perform a `GetBlockHeaders` request.
+//the node to perform a `GetBlockHeaders` request.
 func (s *Suite) TestBlockHashAnnounceObft(t *utesting.T) {
 	if err := s.hashAnnounceObft(eth65); err != nil {
 		t.Fatalf("block hash announcement failed: %v", err)
