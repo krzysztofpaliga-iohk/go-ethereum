@@ -134,7 +134,7 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "TestLargeAnnounceObft", Fn: s.TestLargeAnnounceObft},
 		{Name: "TestOldAnnounceObft", Fn: s.TestOldAnnounceObft},
 		{Name: "TestBlockHashAnnounceObft", Fn: s.TestBlockHashAnnounceObft},
-		//{Name: "TestMaliciousHandshake", Fn: s.TestMaliciousHandshake},
+		{Name: "TestMaliciousHandshakeObft", Fn: s.TestMaliciousHandshakeObft},
 		//{Name: "TestMaliciousStatus", Fn: s.TestMaliciousStatus},
 		//{Name: "TestTransaction", Fn: s.TestTransaction},
 		//{Name: "TestMaliciousTx", Fn: s.TestMaliciousTx},
@@ -767,6 +767,13 @@ func (s *Suite) TestBlockHashAnnounceObft(t *utesting.T) {
 //		t.Fatal(err)
 //	}
 //}
+
+// TestMaliciousHandshake tries to send malicious data during the handshake.
+func (s *Suite) TestMaliciousHandshakeObft(t *utesting.T) {
+	if err := s.maliciousHandshakesObft(t, eth65); err != nil {
+		t.Fatal(err)
+	}
+}
 
 // TestMaliciousHandshake66 tries to send malicious data during the handshake.
 //func (s *Suite) TestMaliciousHandshake66(t *utesting.T) {

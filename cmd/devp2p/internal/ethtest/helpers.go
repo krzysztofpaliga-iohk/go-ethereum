@@ -1025,6 +1025,13 @@ func (s *Suite) maliciousHandshakesObft(t *utesting.T, isEth66 bool) error {
 		{
 			Version: 5,
 			Caps: []p2p.Cap{
+				{Name: "obft", Version: 100},
+			},
+			ID: append(pub0, byte(0)),
+		},
+		{
+			Version: 5,
+			Caps: []p2p.Cap{
 				{Name: "eth", Version: 64},
 				{Name: "eth", Version: 65},
 			},
@@ -1078,7 +1085,7 @@ func (s *Suite) maliciousHandshakesObft(t *utesting.T, isEth66 bool) error {
 				return fmt.Errorf("dial failed: %v", err)
 			}
 		} else {
-			conn, err = s.dial()
+			conn, err = s.dialObft()
 			if err != nil {
 				return fmt.Errorf("dial failed: %v", err)
 			}
