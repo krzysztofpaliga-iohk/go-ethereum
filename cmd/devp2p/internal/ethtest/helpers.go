@@ -1032,24 +1032,14 @@ func (s *Suite) maliciousHandshakesObft(t *utesting.T, isEth66 bool) error {
 		{
 			Version: 5,
 			Caps: []p2p.Cap{
-				{Name: "eth", Version: 64},
-				{Name: "eth", Version: 65},
-			},
-			ID: append(pub0, byte(0)),
-		},
-		{
-			Version: 5,
-			Caps: []p2p.Cap{
-				{Name: "eth", Version: 64},
-				{Name: "eth", Version: 65},
+				{Name: "obft", Version: 100},
 			},
 			ID: append(pub0, pub0...),
 		},
 		{
 			Version: 5,
 			Caps: []p2p.Cap{
-				{Name: "eth", Version: 64},
-				{Name: "eth", Version: 65},
+				{Name: "obft", Version: 100},
 			},
 			ID: largeBuffer(2),
 		},
