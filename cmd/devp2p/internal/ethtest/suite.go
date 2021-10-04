@@ -770,7 +770,7 @@ func (s *Suite) TestBlockHashAnnounceObft(t *utesting.T) {
 
 // TestMaliciousHandshake tries to send malicious data during the handshake.
 func (s *Suite) TestMaliciousHandshakeObft(t *utesting.T) {
-	if err := s.maliciousHandshakesObft(t, eth65); err != nil {
+	if err := s.maliciousHandshakesObft(t); err != nil {
 		t.Fatal(err)
 	}
 }

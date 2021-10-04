@@ -1001,7 +1001,7 @@ func (s *Suite) oldAnnounceObft() error {
 //	return nil
 //}
 
-func (s *Suite) maliciousHandshakesObft(t *utesting.T, isEth66 bool) error {
+func (s *Suite) maliciousHandshakesObft(t *utesting.T) error {
 	var (
 		conn *Conn
 		err  error
@@ -1069,17 +1069,10 @@ func (s *Suite) maliciousHandshakesObft(t *utesting.T, isEth66 bool) error {
 			}
 		}
 		// dial for the next round
-		if isEth66 {
-			conn, err = s.dial66()
-			if err != nil {
+		conn, err = s.dialObft()
+		if err != nil {
 				return fmt.Errorf("dial failed: %v", err)
 			}
-		} else {
-			conn, err = s.dialObft()
-			if err != nil {
-				return fmt.Errorf("dial failed: %v", err)
-			}
-		}
 	}
 	return nil
 }
