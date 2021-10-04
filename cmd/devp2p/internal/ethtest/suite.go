@@ -135,7 +135,7 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "TestOldAnnounceObft", Fn: s.TestOldAnnounceObft},
 		{Name: "TestBlockHashAnnounceObft", Fn: s.TestBlockHashAnnounceObft},
 		{Name: "TestMaliciousHandshakeObft", Fn: s.TestMaliciousHandshakeObft},
-		//{Name: "TestMaliciousStatus", Fn: s.TestMaliciousStatus},
+		{Name: "TestMaliciousStatusObft", Fn: s.TestMaliciousStatusObft},
 		//{Name: "TestTransaction", Fn: s.TestTransaction},
 		//{Name: "TestMaliciousTx", Fn: s.TestMaliciousTx},
 	}
@@ -794,6 +794,19 @@ func (s *Suite) TestMaliciousHandshakeObft(t *utesting.T) {
 //		t.Fatal(err)
 //	}
 //}
+
+// TestMaliciousStatus sends a status package with a large total difficulty.
+func (s *Suite) TestMaliciousStatusObft(t *utesting.T) {
+	conn, err := s.dial()
+	if err != nil {
+		t.Fatalf("dial failed: %v", err)
+	}
+	defer conn.Close()
+
+	if err := s.maliciousStatusObft(conn); err != nil {
+		t.Fatal(err)
+	}
+}
 
 // TestMaliciousStatus66 sends a status package with a large total
 // difficulty over the eth66 protocol.
