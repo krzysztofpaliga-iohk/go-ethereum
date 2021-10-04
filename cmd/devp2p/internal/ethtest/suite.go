@@ -798,7 +798,7 @@ func (s *Suite) TestMaliciousHandshakeObft(t *utesting.T) {
 
 // TestMaliciousStatus sends a status package with a large total difficulty.
 func (s *Suite) TestMaliciousStatusObft(t *utesting.T) {
-	conn, err := s.dial()
+	conn, err := s.dialObft()
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
