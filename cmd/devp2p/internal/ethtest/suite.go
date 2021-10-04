@@ -133,7 +133,7 @@ func (s *Suite) ObftTests() []utesting.Test {
 		{Name: "TestBroadcastObft", Fn: s.TestBroadcastObft},
 		{Name: "TestLargeAnnounceObft", Fn: s.TestLargeAnnounceObft},
 		{Name: "TestOldAnnounceObft", Fn: s.TestOldAnnounceObft},
-		//{Name: "TestBlockHashAnnounce", Fn: s.TestBlockHashAnnounce},
+		{Name: "TestBlockHashAnnounceObft", Fn: s.TestBlockHashAnnounceObft},
 		//{Name: "TestMaliciousHandshake", Fn: s.TestMaliciousHandshake},
 		//{Name: "TestMaliciousStatus", Fn: s.TestMaliciousStatus},
 		//{Name: "TestTransaction", Fn: s.TestTransaction},
@@ -744,6 +744,14 @@ func (s *Suite) TestOldAnnounceObft(t *utesting.T) {
 //		t.Fatalf("block hash announcement failed: %v", err)
 //	}
 //}
+
+//TestBlockHashAnnounce sends a new block hash announcement and expects
+the node to perform a `GetBlockHeaders` request.
+func (s *Suite) TestBlockHashAnnounceObft(t *utesting.T) {
+	if err := s.hashAnnounceObft(eth65); err != nil {
+		t.Fatalf("block hash announcement failed: %v", err)
+	}
+}
 
 // TestBlockHashAnnounce66 sends a new block hash announcement and expects
 // the node to perform a `GetBlockHeaders` request.

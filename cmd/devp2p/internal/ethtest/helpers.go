@@ -1264,7 +1264,7 @@ func (s *Suite) maliciousStatusObft(conn *Conn) error {
 //	return nil
 //}
 
-func (s *Suite) hashAnnounceObft(isEth66 bool, isObft bool) error {
+func (s *Suite) hashAnnounceObft(isEth66 bool) error {
 	// create connections
 	sendConn, recvConn, err := s.createSendAndRecvConnsObft()
 	if err != nil {
