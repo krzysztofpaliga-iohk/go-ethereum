@@ -171,6 +171,7 @@ func blocksFromFile(chainfile string, gblock *types.Block) ([]*types.Block, erro
 	}
 	stream := rlp.NewStream(reader, 0)
 	var blocks = make([]*types.Block, 1)
+	gblock.Hash() 
 	blocks[0] = gblock
 	for i := 0; ; i++ {
 		var b types.Block
