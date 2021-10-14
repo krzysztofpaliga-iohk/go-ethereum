@@ -102,13 +102,13 @@ func rlpxEthTest(ctx *cli.Context) error {
 	//check if given node supports eth66, and if so, run eth66 protocol tests as well
 	is66Failed, _ := utesting.Run(utesting.Test{Name: "Is_66", Fn: suite.Is_66})
 	isOBFTFailed, _ := utesting.Run(utesting.Test{Name: "Is_OBFT", Fn: suite.Is_OBFT})
-	if is66Failed {
-		if isOBFTFailed {
-			return runTests(ctx, suite.EthTests())
-		} else {
-			return runTests(ctx, suite.ObftTests())
-		}
-	}
+	//if is66Failed {
+	//	if isOBFTFailed {
+	//		return runTests(ctx, suite.EthTests())
+	//	} else {
+	//		return runTests(ctx, suite.ObftTests())
+	//	}
+	//}
 	//return runTests(ctx, suite. AllEthTests())
 	return runTests(ctx, suite.ObftTests())
 }
