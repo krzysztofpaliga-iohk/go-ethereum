@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/internal/utesting"
 	"net"
 
 	"github.com/ethereum/go-ethereum/cmd/devp2p/internal/ethtest"
@@ -100,8 +99,8 @@ func rlpxEthTest(ctx *cli.Context) error {
 		exit(err)
 	}
 	//check if given node supports eth66, and if so, run eth66 protocol tests as well
-	is66Failed, _ := utesting.Run(utesting.Test{Name: "Is_66", Fn: suite.Is_66})
-	isOBFTFailed, _ := utesting.Run(utesting.Test{Name: "Is_OBFT", Fn: suite.Is_OBFT})
+	//is66Failed, _ := utesting.Run(utesting.Test{Name: "Is_66", Fn: suite.Is_66})
+	//isOBFTFailed, _ := utesting.Run(utesting.Test{Name: "Is_OBFT", Fn: suite.Is_OBFT})
 	//if is66Failed {
 	//	if isOBFTFailed {
 	//		return runTests(ctx, suite.EthTests())
