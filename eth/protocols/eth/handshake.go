@@ -46,6 +46,7 @@ func (p *Peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis 
 			NetworkID:       network,
 			BestHash:            head,
 			GenesisHash:         genesis,
+			ForkID:              forkID,
 		})
 	}()
 	go func() {
@@ -127,5 +128,8 @@ func (p *Peer) readStatusObft(network uint64, status *StatusObftPacket, genesis 
 	if status.GenesisHash != genesis {
 		return fmt.Errorf("%w: %x (!= %x)", errGenesisMismatch, status.GenesisHash, genesis)
 	}
+	if err := forkFilter(status.ForkID); err != nil {
+    		return fmt.Errorf("%w: %v", errForkIDRejected, err)
+    }
 	return nil
 }

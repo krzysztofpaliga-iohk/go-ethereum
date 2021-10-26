@@ -101,7 +101,7 @@ type StatusObftPacket struct {
 	NetworkID       uint64
 	BestHash    common.Hash
 	GenesisHash common.Hash
-	forkId  forkid.ID
+	ForkId  forkid.ID
 }
 
 // NewBlockHashesPacket is the network packet for the block announcements.
