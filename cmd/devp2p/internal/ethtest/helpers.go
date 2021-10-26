@@ -67,7 +67,7 @@ func (s *Suite) Is_OBFT(t *utesting.T) {
 	if err := conn.handshakeObft(); err != nil {
 		t.Fatalf("handshake failed: %v", err)
 	}
-	if conn.negotiatedProtoVersion != 100 {
+	if conn.negotiatedProtoVersion != 1 {
 		t.Fail()
 	}
 }
@@ -115,9 +115,9 @@ func (s *Suite) dialObft() (*Conn, error) {
 	}
 	// set default p2p capabilities
 	conn.caps = []p2p.Cap{
-		{Name: "obft", Version: 100},
+		{Name: "obft", Version: 1},
 	}
-	conn.ourHighestProtoVersion = 100
+	conn.ourHighestProtoVersion = 1
 	return &conn, nil
 }
 
@@ -1025,21 +1025,21 @@ func (s *Suite) maliciousHandshakesObft(t *utesting.T) error {
 		{
 			Version: 5,
 			Caps: []p2p.Cap{
-				{Name: "obft", Version: 100},
+				{Name: "obft", Version: 1},
 			},
 			ID: append(pub0, byte(0)),
 		},
 		{
 			Version: 5,
 			Caps: []p2p.Cap{
-				{Name: "obft", Version: 100},
+				{Name: "obft", Version: 1},
 			},
 			ID: append(pub0, pub0...),
 		},
 		{
 			Version: 5,
 			Caps: []p2p.Cap{
-				{Name: "obft", Version: 100},
+				{Name: "obft", Version: 1},
 			},
 			ID: largeBuffer(2),
 		},
